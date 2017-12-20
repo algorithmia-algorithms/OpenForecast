@@ -29,7 +29,7 @@ First lets look at the **train** mode and how it's IO works
 | data_path | String | The data connector URI(data://, s3://, dropbox://, etc) path pointing to training or evaluation data. Please follow the guide below for more information.| Required | N/A |
 | iterations | Integer | Defines the number of iterations per epoch for training, bigger numbers take longer| Optional | `10` |
 | layer_width | Integer | Defines your networks layer width, depth is automatically determined by the number of independent variables in your dataset. | Optional | `51` |
-| lookback_beam_width | Defines your networks historical beam width. This variable defines how many previous predictions are available to your network for predicting the next step. Larger beams are useful for complex data models.| Optional | `3` |
+| lookback_beam_width | Integer | Defines your networks historical beam width. This variable defines how many previous predictions are available to your network for predicting the next step. Larger beams are useful for complex data models.| Optional | `3` |
 
 ### Output
 
