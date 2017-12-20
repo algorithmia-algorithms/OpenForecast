@@ -11,10 +11,33 @@ What does all that mean? lets break it down.
 
 Powerful right? Lets get started in figuring out how this all works.
 
-## Overview
+
+
+## Getting Started Guide
 This algorithm has two `modes`, **forecast** and **train**. To create a forecast you need a checkpoint model, which requires running a _train_ operation over at least part of your data.
 
-### First time training
+### Training
+First lets look at the **train** mode and how it's IO works
+
+#### Train mode IO
+### Input
+
+| Parameter | Type | Description | Optional or Required | Default if applicable |
+| --------- | ----------- | ----------- | ----------- |
+| checkpoint_output_path | String | Defines the output path for your trained model file. Must be a data connector URI(data://, s3://, dropbox://, etc)| Required | N/A |
+| checkpoint_input_path | String | defines the input path for your existing model file. Must be a data connector URI(data://, s3://, dropbox://, etc) | Required | N/A |
+| data_path | String | The data connector URI(data://, s3://, dropbox://, etc) path pointing to training or evaluation data. Please follow the guide below for more information.| Required | N/A |
+
+### Output
+
+_Describe the output fields for your algorithm. For example:_
+
+| Parameter | Description |
+| --------- | ----------- |
+| field     | Description of field |
+
+
+#### First time training
 When training a model on your data for the first time, there are some important things to consider.
 * First and foremost, the data _must_ be a file in csv format.
 * In this csv file each column denotes an independent variable, and each row denotes a data point.
@@ -30,27 +53,6 @@ Simple right? Lets also explore another dataset with two independent variables (
 
 Now we have an idea of what our data looks like, lets start exploring the other settings.
 
-
-## Usage
-
-### Input
-
-_Describe the input fields for your algorithm. For example:_
-
-| Parameter | Type | Description | Default if applicable |
-| --------- | ----------- | ----------- | ----------- |
-| mode| String | Tells the algorithm to anticipate a `train` or `forecast` operation. Please follow the guide below for more information. | N/A |
-| checkpoint_output_path | String | Defines the output path for your trained model file. Must be a data connector URI(data://, s3://, dropbox://, etc)| N/A |
-| checkpoint_input_path | String | defines the input path for your existing model file. Must be a data connector URI(data://, s3://, dropbox://, etc) | N/A |
-| data | String | The data connector URI(data://, s3://, dropbox://, etc) path pointing to training or evaluation data. Please follow the guide below for more information.| N/A |
-
-### Output
-
-_Describe the output fields for your algorithm. For example:_
-
-| Parameter | Description |
-| --------- | ----------- |
-| field     | Description of field |
 
 ## Examples
 
