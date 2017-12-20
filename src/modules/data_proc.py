@@ -1,9 +1,10 @@
 import numpy as np
 from src.modules.misc import AlgorithmError, get_file
 
-def process_frames_incremental(data, state, multiplier, beam_width):
+def process_frames_incremental(data, state, multiplier):
     data = np.asarray(data).astype(np.float)
     shape = data.shape
+    beam_width = state['lookup_beam_width']
     norms = state['norm_boundaries']
     io_width = state['io_width']
     if shape[1] != io_width:
@@ -16,8 +17,7 @@ def process_frames_incremental(data, state, multiplier, beam_width):
 
 def process_frames_initial(data, multiplier, beam_width):
     data = np.asarray(data).astype(np.float)
-    shape = data.shape
-    io_dims = shape[1]
+    io_dims = data.shape[1]
     data, norm_boundaries = normalize_and_remove_outliers(data, io_dims, multiplier)
     x, y = prepare_x_y(data, beam_width)
     data = {'x': x, 'y': y}
@@ -53,11 +53,11 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
         data[:, i] = np.divide(numerator, norm_boundaries[i]['max'] - norm_boundaries[i]['min'])
     return data, norm_boundaries
 
-
+# used for reverting the normalization process for forecasts
 def revert_normalization(data, state):
-    io_width = state['io_width']
     norm_boundaries = state['norm_boundaries']
-    for i in range(io_width):
+    io_shape = state['io_width']
+    for i in range(io_shape):
         min = norm_boundaries[i]['min']
         max = norm_boundaries[i]['max']
         data[:, i] = np.multiply(data[:, i], (max - min))

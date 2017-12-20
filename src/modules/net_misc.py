@@ -1,5 +1,5 @@
 from uuid import uuid4
-from src.modules import graph, net, misc
+from src.modules import graph, net, misc, data_proc
 import numpy as np
 import torch
 import copy
@@ -28,10 +28,13 @@ def create_forecasts(data_frame, network, state,  number_of_forecasts, future_le
     for i in range(number_of_forecasts):
         network.load_mutable_state(state)
         network.perturb(noise_amount=noise_amount)
-        result = network.forecast(future=future_length)
-        forecasts.append(result)
+        result = np.swapaxes(network.forecast(future=future_length).cpu().data.numpy(), 0, 1)
+        # We only take the first element of the beam even if our model has a large beam.
+        only_first_step = result[:, 0]
+        denormalized = data_proc.revert_normalization(only_first_step, state)
+        forecasts.append(denormalized)
         print("forecast {} complete".format(str(i)))
-    forecasts = torch.stack(forecasts, 0).cpu().data.numpy()
+    forecasts = np.swapaxes(np.asarray(forecasts), 0, 1)
     network.load_mutable_state(state)
     return forecasts, state, update_loss
 
@@ -57,11 +60,10 @@ def evaluate_performance(data, network, checkpoint_state, length):
     return network
 
 
-def train_autogenerative_model(data_frame, network, checkpoint_state, learning_rate, iterations, drop_percentage):
+def train_autogenerative_model(data_frame, network, checkpoint_state, learning_rate, epochs, iterations, drop_percentage):
     input = Variable(torch.from_numpy(data_frame['x']), requires_grad=False).cuda().float()
     target = Variable(torch.from_numpy(data_frame['y']), requires_grad=False).cuda().float()
     criterion = network.modied_mse_forecast_loss
-    epochs = 5
     best_loss = 1
     best_state = None
     optimizer = optim.LBFGS(network.parameters(), lr=learning_rate, max_iter=iterations)
