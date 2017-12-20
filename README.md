@@ -39,6 +39,7 @@ _Describe the input fields for your algorithm. For example:_
 
 | Parameter | Type | Description | Default(if applicable) |
 | --------- | ----------- | ----------- | ----------- |
+| mode| String | tells the algorithm to anticipate a `train` or `forecast` operation, please follow the workflow below for more information. | No default, required |
 | checkpoint_output_path | String | defines the output path for your trained model file. **must be a data connector URI(data://, s3://, dropbox://, etc)**| No default, Required |
 | 
 
