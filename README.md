@@ -20,7 +20,7 @@ This algorithm has two `modes`, **forecast** and **train**. To create a forecast
 First lets look at the **train** mode and how it's IO works
 
 #### Train mode IO
-### Input
+##### Input
 
 | Parameter | Type | Description | Optional / Required | Default if applicable |
 | --------- | ----------- | ----------- | ----------- |
@@ -34,14 +34,12 @@ First lets look at the **train** mode and how it's IO works
 | input_dropout | Float | This defines the percentage of input that we "drop out" during training. | Optional | `0.45` |
 | io_noise | Float | Defines the percentage of Gaussian noise added to the training data to perturb the results. Both noise and input_dropout help the model generalize to future trends. | Optional | `0.04` |
 
-### Output
+#### Output
 
-_Describe the output fields for your algorithm. For example:_
-
-| Parameter | Description |
-| --------- | ----------- |
-| field     | Description of field |
-
+| Parameter | Type |  Description |
+| --------- | --------- | ----------- |
+| model_save_path  | String | This is the path you provided as `checkpoint_output_path`, useful as a reminder |
+| final error | Float | The best generated model's error, the lower the better.
 
 #### First time training
 When training a model on your data for the first time, there are some important things to consider.
