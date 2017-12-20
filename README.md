@@ -21,10 +21,15 @@ When training a model on your data for the first time, there are some important 
 * Your data should be continuous, step wise operators make training more difficult.
 * **Each point in your dataset must be in temporal order.**
 Lets show you a quick example from a sine curve:
+
 [initial training data for sine curve dataset][initsined]
 
-Simple right? Lets also explore another dataset with two independent variables (this one is based on bitcoin price and transaction volume)
+Simple right? Lets also explore another dataset with two independent variables (this one is based on bitcoin price and transaction volume):
+
 [initial training data for bitcoin dataset][initbitd]
+
+Now we have an idea of what our data looks like, lets start exploring the other settings.
+
 
 ## Usage
 
@@ -32,9 +37,9 @@ Simple right? Lets also explore another dataset with two independent variables (
 
 _Describe the input fields for your algorithm. For example:_
 
-| Parameter | Description |
-| --------- | ----------- |
-| field     | Description of field |
+| Parameter | type |Description |
+| --------- | ----------- | ----------- |
+| checkpoint_output_path     | String | defines the output path for your json 
 
 ### Output
 
