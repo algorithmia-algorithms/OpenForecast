@@ -15,7 +15,16 @@ Powerful right? Lets get started in figuring out how this all works.
 This algorithm has two `modes`, **forecast** and **train**. To create a forecast you need a checkpoint model, which requires running a _train_ operation over at least part of your data.
 
 ### First time training
-When training a model on your data for the first time, there are some important things to consider 
+When training a model on your data for the first time, there are some important things to consider.
+* First and foremost, the data _must_ be a file in csv format.
+* In this csv file each column denotes an independent variable, and each row denotes a data point.
+* Your data should be continuous, step wise operators make training more difficult.
+* **Each point in your dataset must be in temporal order.**
+Lets show you a quick example from a sine curve:
+[initial training data for sine curve dataset][initsined]
+
+Simple right? Lets also explore another dataset with two independent variables (this one is based on bitcoin price and transaction volume)
+[initial training data for bitcoin dataset][initbitd]
 
 ## Usage
 
@@ -42,3 +51,5 @@ _Provide and explain examples of input and output for your algorithm._
 [ef]: https://en.wikipedia.org/wiki/Earthquake_prediction
 [econPred]: https://en.wikipedia.org/wiki/Stock_market_prediction
 [autoreg]: https://dzone.com/articles/vector-autoregression-overview-and-proposals
+[initsined]: https://gist.github.com/zeryx/00a84571fb3bfbfc4e08fdec2900b68f
+[initbitd]: https://gist.github.com/zeryx/5d9a004ac10c4af702fc2a22dc3ad3f8
