@@ -37,11 +37,11 @@ Now we have an idea of what our data looks like, lets start exploring the other 
 
 _Describe the input fields for your algorithm. For example:_
 
-| Parameter | Type | Description | Default(if applicable) |
+| Parameter | Type | Description | Default or Required |
 | --------- | ----------- | ----------- | ----------- |
-| mode| String | tells the algorithm to anticipate a `train` or `forecast` operation, please follow the workflow below for more information. | No default, required |
-| checkpoint_output_path | String | defines the output path for your trained model file. **must be a data connector URI(data://, s3://, dropbox://, etc)**| No default, Required |
-| 
+| mode| String | tells the algorithm to anticipate a `train` or `forecast` operation. Please follow the guide below for more information. | Required |
+| checkpoint_output_path | String | defines the output path for your trained model file. **must be a data connector URI(data://, s3://, dropbox://, etc)**| Required |
+| data | String | the data connector URI(data://, s3://, dropbox://, etc) path pointing to training or evaluation data. Please follow the guide below for more information.|
 
 ### Output
 
