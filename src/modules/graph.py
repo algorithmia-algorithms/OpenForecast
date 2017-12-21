@@ -4,16 +4,22 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from src.modules.misc import put_file
+from src.modules import misc, data_proc
 
-def create_graph(envelope, ground_truth, forecast_length, noise_percentage):
+def create_graph(envelope, state, forecast_length, noise_percentage):
     graph_file_name = "/tmp/{}.png".format(str(uuid4()))
-    if ground_truth.shape[0] < forecast_length:
-        gold = ground_truth
-        gold_length = len(ground_truth)
+    pred_history = state['pred_history'].cpu().data.numpy()
+    true_history = state['true_history'].cpu().data.numpy()
+    headers = state['headers']
+    # ground_truth = data_proc.revert_normalization(history, state)
+    if true_history.shape[0] < forecast_length:
+        true_past = true_history
+        pred_past = pred_history
+        gold_length = len(true_history)
     else:
         gold_length = forecast_length * 2
-        gold = ground_truth[-gold_length:]
+        true_past = true_history[-gold_length:]
+        pred_past = pred_history[-gold_length:]
 
     gold_range = np.arange(gold_length)
     forecast_range = np.arange(gold_length, gold_length + forecast_length)
@@ -21,18 +27,20 @@ def create_graph(envelope, ground_truth, forecast_length, noise_percentage):
     first_low = envelope['first_deviation']['lower_bound']
     second_up = envelope['second_deviation']['upper_bound']
     second_low = envelope['second_deviation']['lower_bound']
-    for i in range(ground_truth.shape[1]):
-        plt.plot(gold_range, gold[:, i], c='y', linestyle='-', label='real data for dimension {}'.format(str(i)), linewidth=2.0)
-        first = np.random.rand(3, )
-        plt.plot(forecast_range, first_up[:, i], c=first, linestyle='--', label='1 sigma from mean, dimension {}'.format(str(i)), linewidth=1.5)
-        plt.plot(forecast_range, first_low[:, i], c=first, linestyle='--', linewidth=1.5)
-        plt.plot(forecast_range, second_up[:, i], c=first, linestyle=':', label='2 sigma from mean, dimension {}'.format(str(i)), linewidth=1.5)
-        plt.plot(forecast_range, second_low[:,  i], c=first, linestyle=':', linewidth=1.5)
+    for i in range(pred_history.shape[1]):
+        history_color = np.random.rand(3,)
+        plt.plot(gold_range, true_past[:, i], c=history_color, linestyle='-', label='historical real: {}'.format(headers[i]), linewidth=2.0)
+        plt.plot(gold_range, pred_past[:, i], c=history_color, linestyle='--', label='historical predicted: {}'.format(headers[i]), linewidth=2.0)
+        forecast_color = np.random.rand(3, )
+        plt.plot(forecast_range, first_up[:, i], c=forecast_color, linestyle='--', label='1 sigma forecast: {}'.format(headers[i]), linewidth=1.5)
+        plt.plot(forecast_range, first_low[:, i], c=forecast_color, linestyle='--', linewidth=1.5)
+        plt.plot(forecast_range, second_up[:, i], c=forecast_color, linestyle=':', label='2 sigma forecast: {}'.format(headers[i]), linewidth=1.5)
+        plt.plot(forecast_range, second_low[:,  i], c=forecast_color, linestyle=':', linewidth=1.5)
 
     plt.title("monte carlo forecast envelope, {}% noise".format(noise_percentage*100))
     plt.xlabel('t')
     plt.ylabel('y(t)')
-    plt.legend()
+    plt.legend(loc=2, fontsize='x-small')
     plt.savefig(graph_file_name)
     # plt.show()
     plt.close()
@@ -63,4 +71,4 @@ def graph_training_data(forecast, forecast_target, historical_forecast, historic
 
 
 def save_graph(graph_path, remote_url):
-    return put_file(graph_path, remote_url)
+    return misc.put_file(graph_path, remote_url)

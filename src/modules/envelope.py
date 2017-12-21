@@ -29,7 +29,9 @@ def create_envelope(forecasts, future_length, state):
     return envelope
 
 
-def ready_envelope(raw_envelope, dims):
+def ready_envelope(raw_envelope, state):
+    io_width = state['io_width']
+    headers = state['headers']
     formatted_envelope = []
     mean = raw_envelope['mean']
     sd = raw_envelope['standard_deviation']
@@ -37,9 +39,9 @@ def ready_envelope(raw_envelope, dims):
     first_lower = raw_envelope['first_deviation']['lower_bound']
     second_upper = raw_envelope['second_deviation']['upper_bound']
     second_lower = raw_envelope['second_deviation']['lower_bound']
-    for i in range(dims):
+    for i in range(io_width):
         dim = {}
-        dim['dimension'] = i
+        dim['variable'] = headers[i]
         dim['first_deviation'] = {}
         dim['second_deviation'] = {}
         dim['mean'] = mean[:, i].tolist()

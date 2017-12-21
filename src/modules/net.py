@@ -29,7 +29,8 @@ class Net(nn.Module):
                  io_width=1,
                  io_noise=0.04,
                  lookup_beam_width=1,
-                 future_beam_width=1):
+                 future_beam_width=1,
+                 headers=None):
         super(Net, self).__init__()
         self.layer_width = layer_width
         self.max_history = max_history
@@ -38,6 +39,7 @@ class Net(nn.Module):
         self.norm_boundaries = None
         self.prime_length = None
         self.io_width = io_width
+        self.headers = headers
         self.io_noise = GaussianNoise(stddev=io_noise)
         self.depth = int(math.ceil(math.log(io_width))+1)
         self.lookup_beam_width = lookup_beam_width
@@ -45,8 +47,8 @@ class Net(nn.Module):
         self.lin1 = nn.Linear(io_width * self.lookup_beam_width, self.layer_width)
         self.gru1 = nn.GRU(self.layer_width, self.layer_width, self.depth)
         self.lin2 = nn.Linear(self.layer_width, self.io_width * self.output_beam_width)
-
-        self.history = Variable(torch.zeros(self.max_history, self.io_width), requires_grad=False).cuda().float()
+        self.true_history = Variable(torch.zeros(self.max_history, self.io_width), requires_grad=False).cuda().float()
+        self.pred_history = Variable(torch.zeros(self.max_history, self.io_width), requires_grad=False).cuda().float()
         self.gru1_h = Variable(torch.zeros(self.depth, 1, self.layer_width), requires_grad=False).cuda().float()
 
     def perturb(self, noise_amount=0):
@@ -55,21 +57,24 @@ class Net(nn.Module):
 
     def load_mutable_state(self, state):
         self.gru1_h = state['gru1_h']
-        self.history = state['history']
+        self.pred_history = state['pred_history']
+        self.true_history = state['true_history']
 
     def get_state(self):
         state = dict()
         state['depth'] = self.depth
         state['max_history'] = self.max_history
+        state['true_history'] = self.true_history
         state['prime_length'] = self.prime_length
         state['io_width'] = self.io_width
         state['input_beam_width'] = self.lookup_beam_width
         state['output_beam_width'] = self.output_beam_width
         state['gru1_h'] = self.gru1_h
-        state['history'] = self.history
+        state['pred_history'] = self.pred_history
         state['norm_boundaries'] = self.norm_boundaries
         state['prime_lr'] = self.prime_lr
         state['lr_mul'] = self.lr_multiplier
+        state['headers'] = self.headers
         return state
 
     def initialize_meta(self, prime_length, norm_boundaries):
@@ -78,21 +83,23 @@ class Net(nn.Module):
 
     def clear_state(self):
         self.gru1_h = Variable(torch.zeros(self.depth, 1, self.layer_width), requires_grad=False).cuda().float()
-        self.history = Variable(torch.zeros(self.max_history, self.io_width),
-                                requires_grad=False).cuda().float()
+        self.reset_history()
+
 
     def reset_history(self):
-        self.history = Variable(torch.zeros(self.max_history, self.io_width),
-                                requires_grad=False).cuda().float()
+        self.pred_history = Variable(torch.zeros(self.max_history, self.io_width),
+                                     requires_grad=False).cuda().float()
+        self.true_history = Variable(torch.zeros(self.max_history, self.io_width),
+                                     requires_grad=False).cuda().float()
 
     def forecast(self, future=0):
         outputs = []
         for i in range(future):
-            point = self.history[-1]
+            point = self.pred_history[-1]
             line = self.create_line(point)
             output = self.process(line)
-            self.history = torch.cat((self.history, output[0]))
-            self.history = self.history[1:]
+            self.pred_history = torch.cat((self.pred_history, output[0]))
+            self.pred_history = self.pred_history[1:]
             outputs.append(output)
         outputs = torch.cat(outputs, 1)
         return outputs
@@ -104,14 +111,17 @@ class Net(nn.Module):
         rand_max = int(drop*1000 + 1000)
         r = 1000
         for input_t in input:
+            real_input = input_t.view(1, self.io_width)
             if r > 1000:
-                point = self.history[-1]
+                point = self.pred_history[-1]
             else:
-                point = input_t.view(1, self.io_width)
+                point = real_input
             line = self.create_line(point)
             output = self.process(line)
-            self.history = torch.cat((self.history, output[0]))
-            self.history = self.history[1:]
+            self.true_history = torch.cat((self.true_history, real_input))
+            self.true_history = self.true_history[1:]
+            self.pred_history = torch.cat((self.pred_history, output[0]))
+            self.pred_history = self.pred_history[1:]
             outputs.append(output)
             r = randrange(rand_min, rand_max)
         outputs = torch.cat(outputs, 1)
@@ -122,7 +132,7 @@ class Net(nn.Module):
         line_data.append(point.squeeze())
         for i in range(2, self.lookup_beam_width+1):
             step = -i
-            hist_point = self.history[step]
+            hist_point = self.pred_history[step]
             line_data.append(hist_point)
         line = torch.cat(line_data, 0).view(1, self.io_width * self.lookup_beam_width)
         return line

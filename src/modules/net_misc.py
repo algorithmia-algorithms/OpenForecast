@@ -23,7 +23,8 @@ def create_forecasts(data_frame, network, state,  number_of_forecasts, future_le
         print("model update loss: {}".format(str(update_loss)))
     else:
         update_loss = np.NaN
-    forecasts = list()
+    normal_forecasts = list()
+    raw_forecasts = list()
     print("checkpoint state loaded, beginning to forecast")
     for i in range(number_of_forecasts):
         network.load_mutable_state(state)
@@ -32,11 +33,13 @@ def create_forecasts(data_frame, network, state,  number_of_forecasts, future_le
         # We only take the first element of the beam even if our model has a large beam.
         only_first_step = result[:, 0]
         denormalized = data_proc.revert_normalization(only_first_step, state)
-        forecasts.append(denormalized)
+        normal_forecasts.append(denormalized)
+        raw_forecasts.append(only_first_step)
         print("forecast {} complete".format(str(i)))
-    forecasts = np.swapaxes(np.asarray(forecasts), 0, 1)
+    normal_forecasts = np.swapaxes(np.asarray(normal_forecasts), 0, 1)
+    raw_forecasts = np.swapaxes(np.asarray(raw_forecasts), 0, 1)
     network.load_mutable_state(state)
-    return forecasts, state, update_loss
+    return normal_forecasts, raw_forecasts, state, update_loss
 
 
 def evaluate_performance(data, network, checkpoint_state, length):
@@ -117,10 +120,11 @@ def load_checkpoint(network_path):
     return network, state
 
 
-def initialize_network(io_dim, layer_width, max_history, initial_lr, lr_multiplier, io_noise, lookback_beam_width, future_beam_width):
+def initialize_network(io_dim, layer_width, max_history, initial_lr, lr_multiplier, io_noise,
+                       lookback_beam_width, future_beam_width, headers):
     network = net.Net(layer_width=layer_width, io_width=io_dim, max_history=max_history, initial_lr=initial_lr,
                       lr_multiplier=lr_multiplier, io_noise=io_noise, lookup_beam_width=lookback_beam_width,
-                      future_beam_width=future_beam_width).cuda().float()
+                      future_beam_width=future_beam_width, headers=headers).cuda().float()
     state = network.get_state()
     return network, state
 
