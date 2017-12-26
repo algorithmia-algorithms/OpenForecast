@@ -16,6 +16,7 @@ The pipelines you create can be somewhat complex here so we're going to go over 
 
 ### Training
 First lets look at the **train** mode and how to get setup.
+<a id="initialTraining"></a>
 #### First time training
 When training a model on your data for the first time, there are some important things to consider.
 * First and foremost, the data _must_ be a file in csv format.
@@ -52,7 +53,7 @@ Here are the remaining training settings that need to be defined, they mostly pr
 Input: 
 ``` json
 {  
-   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
+ "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
    "layer_width":55,
    "iterations":2,
    "io_noise":0.04,
@@ -76,6 +77,7 @@ Output:
 For our initial training we specify all network definition parameters, along with a checkpoint output path, and a data path.
 Keep note of that saved filepath, we're going to need that later.
 
+<a id="incrTraining"></a>
 #### Incremental Training
 
 So you have a model that you've already trained already, and it's been giving you great forecasts. But you've noticed new trends evolving in your timeseries that your model isn't able to predict. Wouldn't it be great if there was a way to incrementally update your model? There is! :smile: 
@@ -93,7 +95,7 @@ For more information on the schema, please take a look at the [training IO table
 Input:
 ``` json
 { 
-  "checkpoint_input_path":data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
+  "checkpoint_input_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1.t7",
    "iterations":2,
    "io_noise":0.04,
@@ -113,7 +115,7 @@ Output:
 
 And just like that you've updated your model to detect new trends.
 
-
+<a id="forecasting"></a>
 ### Forecasting
 So you've trained a model and now you want to start exploring your data, lets take a look at how to make forecasts.
 
@@ -240,7 +242,7 @@ Now lets take a look at an example with `incremental update forecasting`:
 
 #### incremental update IO
 
-![my_sinegraph_t2](https://i.imgur.com/8YX6Rmt.png)
+![my_sinegraph_t1_trained](https://i.imgur.com/CIpIEZW.png)
 
 Input: 
 ``` json
@@ -349,7 +351,7 @@ The graphs are different! This is beacuse when you pass a `data_path` as input, 
 
 What happens if we reuse that saved model and run a `tip-of-checkpoint` forecast? Well let's find out!
 
-![inferred graph](https://i.imgur.com/zqIbPaE.png)
+![inferred graph](https://i.imgur.com/pH30mNl.png)
 
 
 ``` json
@@ -357,13 +359,13 @@ What happens if we reuse that saved model and run a `tip-of-checkpoint` forecast
    "iterations":25,
    "mode":"forecast",
    "graph_save_path":"data://timeseries/generativeforecasting/my_sinegraph_t1_inferred.png",
-   "forecast_size":35,
+   "forecast_size":100,
    "checkpoint_input_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1_inf.t7",
    "io_noise":0.05
 }
 ```
 
-It works! No backpropegation required for simple updates like this. If your datas signals or trends do change or drift overtime, it is highly recommended to perform an [incremental training](#incrTraining) operation perioidically to ensure forecast accuracy.
+It works! No backpropegation required for simple updates like this. If your datas signals or trends do change or drift overtime, it is highly recommended to run a [incremental training](#incrTraining) operation perioidically to ensure forecast accuracy.
 
 ## IO Schema
 
@@ -529,7 +531,7 @@ Each independent variable has it's own Envelope object, with the variable name d
 
 #### Example
 
-```
+``` json
 {  
    "final_error":0.029636630788445473,
    "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_model.t7"
@@ -544,6 +546,9 @@ Great question! We do this so that multivariate graphs are on the same scale. If
 #### How do I know what parameters to use for attention_width, future_beam_width, etc?
 Unfortunately there is no `one size fits all` solution here, it's highly dependent on your data! The default network parameter values work pretty well for us, but we recommend exploring your data by creating multiple initial models with different network parameters and seeing what works best for you.
 
+
+#### I know how well my model performs during training, but how can I calculate my model's generative forecast accuracy?
+With input_dropout we can get pretty close to a real accuracy measurement, but for a more explicit calculation be on the lookout for a sister algorithm named `ForecastAccuracy`.
 
 [ef]: https://en.wikipedia.org/wiki/Earthquake_prediction
 [econPred]: https://en.wikipedia.org/wiki/Stock_market_prediction
