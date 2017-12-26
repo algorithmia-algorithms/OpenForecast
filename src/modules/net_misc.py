@@ -21,8 +21,6 @@ def create_forecasts(data_frame, network, state,  number_of_forecasts, future_le
         update_loss = criterion(output, target)
         update_loss = update_loss.cpu().data.numpy()[0]
         print("model update loss: {}".format(str(update_loss)))
-    else:
-        update_loss = np.NaN
     normal_forecasts = list()
     raw_forecasts = list()
     print("checkpoint state loaded, beginning to forecast")
@@ -39,7 +37,7 @@ def create_forecasts(data_frame, network, state,  number_of_forecasts, future_le
     normal_forecasts = np.swapaxes(np.asarray(normal_forecasts), 0, 1)
     raw_forecasts = np.swapaxes(np.asarray(raw_forecasts), 0, 1)
     network.load_mutable_state(state)
-    return normal_forecasts, raw_forecasts, state, update_loss
+    return normal_forecasts, raw_forecasts, state
 
 
 def evaluate_performance(data, network, checkpoint_state, length):

@@ -92,7 +92,7 @@ def apply(input):
             guard.data_path = data_proc.get_frame(guard.data_path)
             guard.data_path = data_proc.process_frames_incremental(guard.data_path, state, outlier_removal_multiplier)
 
-        normal_forecast, raw_forecast, state, checkpoint_model = net_misc.create_forecasts(guard.data_path, network, state, guard.iterations, guard.forecast_size, guard.io_noise)
+        normal_forecast, raw_forecast, state = net_misc.create_forecasts(guard.data_path, network, state, guard.iterations, guard.forecast_size, guard.io_noise)
 
         output_env = envelope.create_envelope(normal_forecast, guard.forecast_size, state)
         if guard.graph_save_path:
@@ -100,7 +100,7 @@ def apply(input):
             graph_path = graph.create_graph(graphing_env, state, guard.forecast_size, guard.io_noise)
             output['saved_graph_path'] = graph.save_graph(graph_path, guard.graph_save_path)
         if guard.checkpoint_output_path:
-            output['checkpoint_output_path'] = net_misc.save_model(checkpoint_model, guard.checkpoint_output_path)
+            output['checkpoint_output_path'] = net_misc.save_model(network, guard.checkpoint_output_path)
         formatted_envelope = envelope.ready_envelope(output_env, state)
         output['envelope'] = formatted_envelope
     if guard.mode == "train":
@@ -136,7 +136,7 @@ def test_train():
     # input['data_path'] = 'data://zeryx/forecasting_testing/sinewave_bulk.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/sinewave_incremental.csv'
     # input['data_path'] = "data://TimeSeries/GenerativeForecasting/btc-train_2.csv"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/sinewave_incremental.csv"
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/sinewave_bulk.csv"
     # input['data_path'] = 'data://zeryx/forecasting_testing/csdisco-train_1.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/sine_wave_train.csv'
     # input['data_path'] = "data://zeryx/forecasting_testing/funpokes-train.csv"
@@ -147,18 +147,18 @@ def test_train():
     # input['checkpoint_output_path'] = "data://zeryx/forecasting_testing/sinewave_bulk_model.t7"
     # input['checkpoint_output_path'] = "data://zeryx/forecasting_testing/sinewave_incremented_model.t7"
     # input['checkpoint_input_path'] = "data://zeryx/forecasting_testing/sinewave_bulk_model.t7"
-    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
-    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t1.t7"
+    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
+    # input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t1.t7"
     # input['checkpoint_output_path'] = "data://zeryx/forecasting_testing/sine_model.t7"
     # input['checkpoint'] = "data://zeryx/forecasting_testing/trained_batch_model.t7"
     # input['checkpoint_output_path'] = "data://zeryx/forecasting_testing/unavariate_model.t7"
     # input['checkpoint_output_path'] = "data://zeryx/forecasting_testing/bivariate_model.t7"
     input['iterations'] = 10
     # input['layer_width'] = 55
-    input['io_noise'] = 0.04
+    input['io_noise'] = 0.06
     # input['attention_beam_width'] = 55
     # input['future_beam_width'] = 20
-    input['input_dropout'] = 0.4
+    input['input_dropout'] = 0.45
     return apply(input)
 
 
@@ -167,10 +167,10 @@ def test_forecast():
     input['mode'] = "forecast"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/btc_model_headers.t7"
     # input['data_path'] = "data://zeryx/forecasting_testing/funpokes-test.csv"
-    input['data_path'] = 'data://timeseries/generativeforecasting/sinewave_incremental.csv'
+    # input['data_path'] = 'data://timeseries/generativeforecasting/sinewave_incremental.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/csdisco-test_2.csv'
-    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
-    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t1_inf.t7"
+    # input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
+    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t1_inf.t7"
     # input['checkpoint_input_path'] = "data://zeryx/forecasting_testing/csdisco_model.t7"
     # input['data_path'] = 'data://zeryx/forecasting_testing/btc-test_2.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/sine_wave_test.csv'
@@ -182,10 +182,11 @@ def test_forecast():
     # input['checkpoint_output_path'] = "data://zeryx/forecasting_testing/bivariate_model_up2date.t7"
     # input['checkpoint_input_path'] = "data://zeryx/forecasting_testing/sinewave_incremented_model.t7"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/btc_model_headers.t7"
-    input['graph_save_path'] = "data://timeseries/generativeforecasting/my_sinegraph_t1.png"
-    input['forecast_size'] = 10
+    input['graph_save_path'] = "data://timeseries/generativeforecasting/my_sinegraph.png"
+    input['forecast_size'] = 100
     input['iterations'] = 25
-    input['io_noise'] = 0.05
+    input['io_noise'] = 0.06
+    print(input)
     return apply(input)
 
 torch.backends.cudnn.enabled = False

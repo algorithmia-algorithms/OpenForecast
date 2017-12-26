@@ -54,6 +54,7 @@ class Net(nn.Module):
     def perturb(self, noise_amount=0):
         noise = GaussianNoise(stddev=noise_amount)
         self.gru1_h = noise(self.gru1_h)
+        self.pred_history = noise(self.pred_history)
 
     def load_mutable_state(self, state):
         self.gru1_h = state['gru1_h']
