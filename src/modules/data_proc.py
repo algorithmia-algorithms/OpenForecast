@@ -16,7 +16,7 @@ def process_frames_incremental(data, state, multiplier):
         data.pop(0)
     data = np.asarray(data).astype(np.float)
     shape = data.shape
-    beam_width = state['lookup_beam_width']
+    beam_width = state['output_beam_width']
     norms = state['norm_boundaries']
     io_width = state['io_width']
     if shape[1] != io_width:
@@ -62,14 +62,9 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
     for i in range(dimensions):
         for j in range(len(data[:, i])):
             if not (data[j, i] > mean[i] - multiplier * sd[i]):
-                print('popped {} for being out of bounds.'.format(str(data[j, i])))
+                print('clipped {} for being too far from mean.'.format(str(data[j, i])))
                 data[j, i] = False
 
-    if norm_boundaries == list():
-        for i in range(dimensions):
-            max = np.max(data[:, i])
-            min = np.min(data[:, i])
-            norm_boundaries.append({'max': max, 'min': min})
     for i in range(dimensions):
         numerator = np.subtract(data[:, i], norm_boundaries[i]['min'])
         data[:, i] = np.divide(numerator, norm_boundaries[i]['max'] - norm_boundaries[i]['min'])
