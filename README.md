@@ -401,6 +401,7 @@ It works! No backpropegation required for simple updates like this. If your data
 <a id="envelopeTable"></a>
 #### Envelope Object
 Each independent variable has it's own Envelope object, with the variable name defined by `variable`.
+
 | Parameter | Type | Description | 
 | --------- | --------- | --------- |
 | variable | String | The name of the variable for this dimension, defined during initial training from your csv header. |
