@@ -52,11 +52,11 @@ Here are the remaining training settings that need to be defined, they mostly pr
 Input: 
 ``` json
 {  
-   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0.t7",
+   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
    "layer_width":55,
    "iterations":2,
    "io_noise":0.04,
-   "data_path":"data://TimeSeries/GenerativeForecasting/sinewave_initial_training.csv",
+   "data_path":"data://TimeSeries/GenerativeForecasting/sinewave_v1.0_t0.csv",
    "attention_beam_width":55,
    "input_dropout":0.4,
    "mode":"train",
@@ -83,7 +83,7 @@ So you have a model that you've already trained already, and it's been giving yo
 When you already have a trained model, you can incrementally retrain it by simply providing that model URI with the `checkpoint_input_path` key in your input, that's it! All network definition parameters are preserved so there's no need to write them all out again. 
 Here is a simple list of parameters you can adjust during incremental training:
 
-* `input_dropout` - How can we make sure that our training process is kept on task? We do this by forcing the model to stoichastically feed it it's own predictions as input! This keeps the training model focused on auto-regressive forcasting, and along with `io_noise` prevents overfitting.
+* `input_dropout` - How can we make sure that our training process is kept on task? We do this by forcing the model to stoichastically feed it it's own predictions as input. This keeps the training model focused on auto-regressive forcasting, and along with `io_noise`, prevents overfitting.
 * `io_noise` - We add gaussian noise to the input and output for our network during training, and can be kept during forecasting as well. We do this to prevent overfitting, and to force the model to learn large scale trends rather than micro-fluctuations. For most tasks `0.04` or `4%` noise is sufficient.
 
 For more information on the schema, please take a look at the [training IO table](#trainingTable)
