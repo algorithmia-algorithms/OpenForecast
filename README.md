@@ -4,15 +4,17 @@ GenerativeForecast is a **multivariate**, **incrementally trainable** auto-regre
 
 ## Introduction
 What does all that mean? lets break it down.
-* Multivatiate - This means that the algorithm can be trained to forecast multiple independent variables at once, this can be very useful for forecasting real world events like [earthquake forecasting][ef], along with more economically rewarding activities like [economic asset price prediction][econPred].
-* Incrementally trainable - This algorithm can be incrementally trained with new data without needing to start from scratch. It's quite possible to automatically update your model or models on a daily/hourly/minute basis with new data that you can then use to quickly forecast the next N steps. It should also be mentioned that you don't _have_ to update your model before making a forecast! That's right, you can pass new data into the 'forecast' method and it will update the model state without running a backpropegation operation.
+* Multivatiate - This means that the algorithm can be trained to forecast *multiple independent variables at once*. This can be very useful for forecasting real world events like [earthuake forecasting][ef], along with more economically rewarding activities like [economic asset price prediction][econPred].
+* Incrementally trainable - This algorithm can be incrementally trained with new data without needing to start from scratch. It's quite possible to automatically update your model or models on a daily/hourly/minute basis with new data that you can then use to quickly forecast the next N steps. It should also be mentioned that you don't _have_ to update your model before making a forecast! That's right, *you can pass new data into the 'forecast' method and it will update the model state without running a backpropegation operation.*
 * Auto-regressive - Forecasting the future can be tricky, particularly when you aren't sure how far into the future you wish to look.  This algorithm uses it's previously predicted data points to help understand what the future looks like. For more information check out [this post][autoreg].
 
-Powerful right? Lets get started in figuring out how this all works.
+Lets get started in figuring out how this all works.
 
 ## Getting Started Guide
 This algorithm has two main `modes`, **forecast** and **train**. To create a forecast you need to create a checkpoint model, which you can make by running a _train_ operation over your input data.
 The pipelines you create can be somewhat complex here so we're going to go over everything as much as we can.
+
+If at any time you are unsure as to what a particular variable does, be sure to take a look at the IO Schema at the bottom of this description.
 
 ### Training
 First lets look at the **train** mode and how to get setup.
@@ -35,8 +37,6 @@ Simple right? Lets also explore another dataset with two independent variables (
 
 Notice the headers? **You only have to define headers when training a brand new model, the network file itself will store your headers to keep things simple.** Don't worry if all your csv data has headers, our algorithm is smart enough to figure that out! What if you don't have headers? No problem, the algorithm has default variable names to use if they're missing.
 
-
-Now that we have our data all ready, lets take a look at our [training parameters table](#trainingTable).
 
 Some important parameters initial training parameters to consider:
 * `layer_width` - Defines how much knowledge your model is able to grasp. It's tough to overfit with our data augmentation strategies so using a larger number here for challenging datasets can certainly help.
@@ -87,8 +87,6 @@ Here is a simple list of parameters you can adjust during incremental training:
 
 * `input_dropout` - How can we make sure that our training process is kept on task? We do this by forcing the model to stoichastically feed it it's own predictions as input. This keeps the training model focused on auto-regressive forcasting, and along with `io_noise`, prevents overfitting.
 * `io_noise` - We add gaussian noise to the input and output for our network during training, and can be kept during forecasting as well. We do this to prevent overfitting, and to force the model to learn large scale trends rather than micro-fluctuations. For most tasks `0.04` or `4%` noise is sufficient.
-
-For more information on the schema, please take a look at the [training IO table](#trainingTable)
 
 #### Example IO
 
@@ -236,7 +234,7 @@ Output:
 }
 ```
 
-So in this example we have the [envelope](#envelopeTable) coordinates defined as multiple lists of `forecast_size` in length.
+So in this example we have the `envelope` coordinates defined as multiple lists of `forecast_size` in length.
 
 Now lets take a look at an example with `incremental update forecasting`:
 
