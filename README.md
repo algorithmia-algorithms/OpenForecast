@@ -1,4 +1,4 @@
-![sine wave splash](https://i.imgur.com/kDi9uIG.png)
+![sine wave splash](https://i.imgur.com/hhB6fCb.png)
 
 GenerativeForecast is a **multivariate**, **incrementally trainable** auto-regressive forecasting algorithm.
 
