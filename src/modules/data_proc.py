@@ -61,9 +61,14 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
     sd = np.std(data, axis=0)
     for i in range(dimensions):
         for j in range(len(data[:, i])):
-            if not (data[j, i] > mean[i] - multiplier * sd[i]):
-                print('clipped {} for being too far from mean.'.format(str(data[j, i])))
-                data[j, i] = False
+            max_delta = mean[i] - multiplier * sd[i]
+            if not (data[j, i] > max_delta):
+                print('clipped {} for being too far above the mean.'.format(str(data[j, i])))
+                data[j, i] = max_delta
+            elif not (-data[j, i] > max_delta):
+                print('clipped {} for being too far below the mean.'.format(str(data[j, i])))
+                data[j, i] = -max_delta
+
 
     for i in range(dimensions):
         numerator = np.subtract(data[:, i], norm_boundaries[i]['min'])

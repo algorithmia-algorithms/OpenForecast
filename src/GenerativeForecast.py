@@ -58,6 +58,8 @@ def process_input(input):
             guard.checkpoint_input_path = type_check(input, 'checkpoint_input_path', str)
         else:
             raise misc.AlgorithmError("'checkpoint_input_path' required for 'forecast' mode.")
+        if 'checkpoint_output_path' in input:
+            guard.checkpoint_output_path = type_check(input, 'checkpoint_output_path', str)
         if 'forecast_size' in input:
             guard.forecast_size = int(input['forecast_size'])
         if 'graph_save_path' in input:
@@ -181,7 +183,7 @@ def test_forecast():
     # input['checkpoint_input_path'] = "data://zeryx/forecasting_testing/sinewave_incremented_model.t7"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/btc_model_headers.t7"
     input['graph_save_path'] = "data://timeseries/generativeforecasting/my_sinegraph_t1.png"
-    input['forecast_size'] = 35
+    input['forecast_size'] = 10
     input['iterations'] = 25
     input['io_noise'] = 0.05
     return apply(input)
@@ -189,6 +191,6 @@ def test_forecast():
 torch.backends.cudnn.enabled = False
 
 if __name__ == "__main__":
-   # result = test_forecast()
-   result = test_train()
+   result = test_forecast()
+   # result = test_train()
    print(result)
