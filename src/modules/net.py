@@ -28,7 +28,7 @@ class Net(nn.Module):
                  max_history=50,
                  io_width=1,
                  io_noise=0.04,
-                 lookup_beam_width=1,
+                 attention_beam_width=1,
                  future_beam_width=1,
                  headers=None):
         super(Net, self).__init__()
@@ -42,9 +42,9 @@ class Net(nn.Module):
         self.headers = headers
         self.io_noise = GaussianNoise(stddev=io_noise)
         self.depth = int(math.ceil(math.log(io_width))+1)
-        self.lookup_beam_width = lookup_beam_width
+        self.attention_beam_width = attention_beam_width
         self.output_beam_width = future_beam_width
-        self.lin1 = nn.Linear(io_width * self.lookup_beam_width, self.layer_width)
+        self.lin1 = nn.Linear(io_width * self.attention_beam_width, self.layer_width)
         self.gru1 = nn.GRU(self.layer_width, self.layer_width, self.depth)
         self.lin2 = nn.Linear(self.layer_width, self.io_width * self.output_beam_width)
         self.true_history = Variable(torch.zeros(self.max_history, self.io_width), requires_grad=False).cuda().float()
@@ -67,7 +67,7 @@ class Net(nn.Module):
         state['true_history'] = self.true_history
         state['prime_length'] = self.prime_length
         state['io_width'] = self.io_width
-        state['input_beam_width'] = self.lookup_beam_width
+        state['attention_beam_width'] = self.attention_beam_width
         state['output_beam_width'] = self.output_beam_width
         state['gru1_h'] = self.gru1_h
         state['pred_history'] = self.pred_history
@@ -130,11 +130,11 @@ class Net(nn.Module):
     def create_line(self, point):
         line_data = list()
         line_data.append(point.squeeze())
-        for i in range(2, self.lookup_beam_width+1):
+        for i in range(2, self.attention_beam_width+1):
             step = -i
             hist_point = self.pred_history[step]
             line_data.append(hist_point)
-        line = torch.cat(line_data, 0).view(1, self.io_width * self.lookup_beam_width)
+        line = torch.cat(line_data, 0).view(1, self.io_width * self.attention_beam_width)
         return line
 
 

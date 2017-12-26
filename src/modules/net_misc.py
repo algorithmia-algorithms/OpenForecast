@@ -121,9 +121,9 @@ def load_checkpoint(network_path):
 
 
 def initialize_network(io_dim, layer_width, max_history, initial_lr, lr_multiplier, io_noise,
-                       lookback_beam_width, future_beam_width, headers):
+                       attention_beam_width, future_beam_width, headers):
     network = net.Net(layer_width=layer_width, io_width=io_dim, max_history=max_history, initial_lr=initial_lr,
-                      lr_multiplier=lr_multiplier, io_noise=io_noise, lookup_beam_width=lookback_beam_width,
+                      lr_multiplier=lr_multiplier, io_noise=io_noise, attention_beam_width=attention_beam_width,
                       future_beam_width=future_beam_width, headers=headers).cuda().float()
     state = network.get_state()
     return network, state
