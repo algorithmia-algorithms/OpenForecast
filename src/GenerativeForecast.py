@@ -1,5 +1,5 @@
 import os
-os.setenv("LD_PRELOAD", "/usr/lib/x86_64-linux-gnu/libgfortran.so.3")
+os.environ["LD_PRELOAD"] = "/usr/lib/x86_64-linux-gnu/libgfortran.so.3"
 import torch
 from src.modules import data_proc, graph, misc, net_misc, envelope
 
