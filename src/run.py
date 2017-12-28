@@ -110,6 +110,7 @@ if __name__ == "__main__":
     input_filename = sys.argv[1]
     output_filename = sys.argv[2]
     with open(input_filename) as f:
+        print("data:\n{}".format(str(f.read())))
         input = json.load(f)
     output = run(input)
     with open(output_filename, 'w') as f:
