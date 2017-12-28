@@ -80,19 +80,17 @@ def type_check(dic, id, type):
 
 def apply(input):
     guard = process_input(input)
-    in_name = "/tmp/input"
-    out_name = '/tmp/output'
-    output = execute_workaround(guard, in_name, out_name)
+    output = execute_workaround(guard)
     return output
 
 
-def execute_workaround(input_data, input_queue, output_queue):
+def execute_workaround(input_data):
     os.environ['LD_PRELOAD'] = '/usr/lib/x86_64-linux-gnu/libgfortran.so.3'
     _, in_filename = tempfile.mkstemp()
     _, out_filename = tempfile.mkstemp()
     print(in_filename)
     print(out_filename)
-    with open(input_queue, 'w') as f:
+    with open(in_filename, 'w') as f:
         json.dump(input_data.__dict__, f)
     runShellCommand(['python', 'run.py', in_filename, out_filename], cwd=os.path.dirname(os.path.realpath(__file__)))
     with open(output_queue) as f:
