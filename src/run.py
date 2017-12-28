@@ -107,10 +107,22 @@ if __name__ == "__main__":
                                                              drop_percentage=guard.input_dropout)
         output['checkpoint_output_path'] = net_misc.save_model(network, guard.checkpoint_output_path)
         output['final_error'] = float(error)
+        
+    class Dict2Obj(object):
+    """
+    Turns a dictionary into a class
+    """
+ 
+    #----------------------------------------------------------------------
+    def __init__(self, dictionary):
+        """Constructor"""
+        for key in dictionary:
+            setattr(self, key, dictionary[key])
+    
     input_filename = sys.argv[1]
     output_filename = sys.argv[2]
     with open(input_filename) as f:
-        input = json.loads(f.read())
+        input = Dict2Obj(json.loads(f.read()))
     output = run(input)
     with open(output_filename, 'w') as f:
         json.dump(output, f)
