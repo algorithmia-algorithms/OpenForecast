@@ -1,7 +1,7 @@
 import json
 from src.modules import misc
 import subprocess
-import os
+import tempfile, os
 class InputGuard():
     def __init__(self):
         self.mode = None
@@ -88,14 +88,13 @@ def apply(input):
 
 def execute_workaround(input_data, input_queue, output_queue):
     os.environ['LD_PRELOAD'] = '/usr/lib/x86_64-linux-gnu/libgfortran.so.3'
-    try:
-        os.mkfifo(input_queue)
-        os.mkfifo(output_queue)
-    except:
-        pass
+    in_filename = tempfile.mkstemp(input_queue)
+    out_filename = tempfile.mkstemp(output_queue)
+    print(in_filename)
+    print(out_filename)
     with open(input_queue, 'w') as f:
         json.dump(input_data, f)
-    runShellCommand(['python', 'run.py', input_queue, output_queue])
+    runShellCommand(['python', 'run.py', in_filename, out_filename])
     with open(output_queue) as f:
         output = json.load(f)
     return output
