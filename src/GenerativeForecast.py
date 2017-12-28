@@ -103,7 +103,7 @@ def execute_workaround(input_data, input_queue, output_queue):
 
 def runShellCommand(commands, cwd=None):
     try:
-        subprocess.check_call(commands, cwd=cwd)
+        subprocess.check_call(commands, stdin=file('/dev/null'), stderr=file('/dev/null', 'wb'), stdout=file('/dev/null', 'wb'), cwd=cwd)
     except subprocess.CalledProcessError as e:
         txt = "Error Code:\n" + str(e.returncode) + "\nError output:\n" + str(e.output)
         raise misc.AlgorithmError(txt)
