@@ -109,15 +109,10 @@ if __name__ == "__main__":
         output['final_error'] = float(error)
         
     class Dict2Obj(object):
-    """
-    Turns a dictionary into a class
-    """
- 
-    #----------------------------------------------------------------------
-    def __init__(self, dictionary):
-        """Constructor"""
-        for key in dictionary:
-            setattr(self, key, dictionary[key])
+        def __init__(self, dictionary):
+            """Constructor"""
+            for key in dictionary:
+                setattr(self, key, dictionary[key])
     
     input_filename = sys.argv[1]
     output_filename = sys.argv[2]
