@@ -94,7 +94,7 @@ def execute_workaround(input_data, input_queue, output_queue):
     print(out_filename)
     with open(input_queue, 'w') as f:
         json.dump(input_data.__dict__, f)
-    runShellCommand(['python', 'run.py', in_filename, out_filename])
+    runShellCommand(['python', 'run.py', in_filename, out_filename], cwd=os.getcwd())
     with open(output_queue) as f:
         output = json.load(f)
     return output
@@ -103,7 +103,7 @@ def execute_workaround(input_data, input_queue, output_queue):
 
 def runShellCommand(commands, cwd=None):
     try:
-        subprocess.check_call(commands, stdin=open('/dev/null'), stderr=open('/dev/null', 'wb'), stdout=open('/dev/null', 'wb'), cwd=cwd)
+        subprocess.check_call(commands, cwd=cwd)
     except subprocess.CalledProcessError as e:
         txt = "Error Code:\n" + str(e.returncode) + "\nError output:\n" + str(e.output)
         raise misc.AlgorithmError(txt)
