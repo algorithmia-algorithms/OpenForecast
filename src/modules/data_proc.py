@@ -1,5 +1,5 @@
 import numpy as np
-from src.modules.misc import AlgorithmError, get_file
+from modules.misc import AlgorithmError, get_file
 
 
 def is_header(row):
