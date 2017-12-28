@@ -1,6 +1,5 @@
 import json
 from src.modules import misc
-import hashlib
 import subprocess
 import os
 class InputGuard():
