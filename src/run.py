@@ -6,6 +6,24 @@ if __name__ == "__main__":
     torch.backends.cudnn.enabled = False
 
 
+    class InputGuard():
+        def __init__(self):
+            self.mode = None
+            self.data_path = None
+            self.checkpoint_input_path = None
+            self.checkpoint_output_path = None
+            self.graph_save_path = None
+            self.iterations = 10
+            self.epochs = 4
+            self.forecast_size = 15
+            self.layer_width = 51
+            self.io_noise = 0.04
+            self.attention_beam_width = 25
+            self.future_beam_width = 10
+            self.input_dropout = 0.45
+        
+
+
     def run(guard):
         outlier_removal_multiplier = 5
         max_history = 500
@@ -60,7 +78,35 @@ if __name__ == "__main__":
                                                                  learning_rate=lr_rate, epochs=guard.epochs,
                                                                  drop_percentage=guard.input_dropout)
             output['checkpoint_output_path'] = net_misc.save_model(network, guard.checkpoint_output_path)
-            output['final_error'] = float(error)
+        formatted_envelope = envelope.ready_envelope(output_env, state)
+        output['envelope'] = formatted_envelope
+        if guard.mode == "train":
+            guard.data_path = data_proc.get_frame(guard.data_path)
+        if guard.checkpoint_input_path:
+            local_file = data_proc.get_file(guard.checkpoint_input_path)
+            network, state = net_misc.load_checkpoint(local_file)
+            data = data_proc.process_frames_incremental(guard.data_path, state, outlier_removal_multiplier)
+            lr_rate = net_misc.determine_lr(data, state)
+        else:
+            data, norm_boundaries, headers = data_proc.process_frames_initial(guard.data_path,
+                                                                              outlier_removal_multiplier,
+                                                                              beam_width=guard.future_beam_width)
+            io_dim = len(norm_boundaries)
+            learning_rate = float(base_learning_rate) / io_dim
+            network, state = net_misc.initialize_network(io_dim=io_dim, layer_width=guard.layer_width,
+                                                         max_history=max_history,
+                                                         initial_lr=learning_rate, lr_multiplier=gradient_multiplier,
+                                                         io_noise=guard.io_noise,
+                                                         attention_beam_width=guard.attention_beam_width,
+                                                         future_beam_width=guard.future_beam_width, headers=headers)
+            network.initialize_meta(len(data['x']), norm_boundaries)
+            lr_rate = state['prime_lr']
+        error, network = net_misc.train_autogenerative_model(data_frame=data, network=network,
+                                                             checkpoint_state=state, iterations=guard.iterations,
+                                                             learning_rate=lr_rate, epochs=guard.epochs,
+                                                             drop_percentage=guard.input_dropout)
+        output['checkpoint_output_path'] = net_misc.save_model(network, guard.checkpoint_output_path)
+        output['final_error'] = float(error)
     input_filename = sys.argv[1]
     output_filename = sys.argv[2]
     with open(input_filename) as f:
