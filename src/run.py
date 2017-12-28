@@ -21,7 +21,7 @@ if __name__ == "__main__":
             self.attention_beam_width = 25
             self.future_beam_width = 10
             self.input_dropout = 0.45
-        
+
 
 
     def run(guard):
