@@ -49,13 +49,7 @@ if __name__ == "__main__":
         formatted_envelope = envelope.ready_envelope(output_env, state)
         output['envelope'] = formatted_envelope
         return output
-<<<<<<< HEAD
-    
-    
-=======
 
-
->>>>>>> branch 'master' of /algorithmia/legit/git/TimeSeries/GenerativeForecast.git
     def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gradient_multiplier):
         output = dict()
         guard.data_path = data_proc.get_frame(guard.data_path)
@@ -85,11 +79,6 @@ if __name__ == "__main__":
         output['checkpoint_output_path'] = net_misc.save_model(network, guard.checkpoint_output_path)
         output['final_error'] = float(error)
         return output
-<<<<<<< HEAD
-        
-=======
-
->>>>>>> branch 'master' of /algorithmia/legit/git/TimeSeries/GenerativeForecast.git
 
 
     def run(guard):
