@@ -101,13 +101,14 @@ def execute_workaround(input_data):
 
 def runShellCommand(commands, cwd=None):
     try:
-        p = Popen(commands, stderr=PIPE, stdout=PIPE, cwd=cwd)
+        p = Popen(commands, stdout=PIPE, stderr=PIPE, cwd=cwd)
         output, error = p.communicate()
-        if len(error) > 0:
-            raise CalledProcessError(1, error)
+        if error:
+            raise misc.AlgorithmError(error.strip())
     except CalledProcessError as e:
-        txt = "Error Code:\n" + str(e.returncode) + "\nError output:\n" + str(e.output)
-        raise misc.AlgorithmError(txt)
+        raise e
+    except misc.AlgorithmError as e:
+        raise e
 
 
 def test_train():
