@@ -19,10 +19,6 @@ class InputGuard():
         self.future_beam_width = 10
         self.input_dropout = 0.45
 
-    def __init__(self, dictionary):
-        for key in dictionary:
-            setattr(self, key, dictionary[key])
-
 
 
 def process_input(input):
