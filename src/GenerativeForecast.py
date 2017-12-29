@@ -101,11 +101,10 @@ def execute_workaround(input_data):
 
 def runShellCommand(commands, cwd=None):
     try:
-        p = Popen(commands, stderr=STDOUT, cwd=cwd)
-        p.wait()
-        err = p.stdout.read()
-        if len(err) > 0:
-            raise CalledProcessError(1, err)
+        p = Popen(commands, stderr=PIPE, stdout=PIPE, cwd=cwd)
+        output, error = p.communicate()
+        if len(error) > 0:
+            raise CalledProcessError(1, error)
     except CalledProcessError as e:
         txt = "Error Code:\n" + str(e.returncode) + "\nError output:\n" + str(e.output)
         raise misc.AlgorithmError(txt)
