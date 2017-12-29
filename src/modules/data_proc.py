@@ -23,8 +23,8 @@ def process_frames_incremental(data, state, multiplier):
         raise AlgorithmError("data dimensions are different from expected, got {}\t expected {}.".format(str(shape[1]), str(io_width)))
     data, _ = normalize_and_remove_outliers(data, io_width, multiplier, norms)
     x, y = prepare_x_y(data, beam_width)
-    data = {'x': x, 'y': y}
-    return data
+    output = {'x': x, 'y': y}
+    return output
 
 
 def process_frames_initial(data, multiplier, beam_width):
