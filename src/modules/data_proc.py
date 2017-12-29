@@ -57,7 +57,7 @@ def prepare_x_y(data, beam_width):
     return x, y
 
 
-def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=list()):
+def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=None):
     mean = np.mean(data, axis=0)
     sd = np.std(data, axis=0)
     for i in range(dimensions):
@@ -69,7 +69,12 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
             elif not (-data[j, i] > max_delta):
                 print('clipped {} for being too far below the mean.'.format(str(data[j, i])))
                 data[j, i] = -max_delta
-    if norm_boundaries != list():
+    if norm_boundaries:
+        for i in range(dimensions):
+            numerator = np.subtract(data[:, i], norm_boundaries[i]['min'])
+            data[:, i] = np.divide(numerator, norm_boundaries[i]['max'] - norm_boundaries[i]['min'])
+
+    else:
         for i in range(dimensions):
             max = np.max(data[:, i], axis=0)
             min = np.min(data[:, i], axis=0)
