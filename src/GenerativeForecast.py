@@ -86,6 +86,7 @@ def apply(input):
 
 def execute_workaround(input_data):
     os.environ['LD_PRELOAD'] = '/usr/lib/x86_64-linux-gnu/libgfortran.so.3'
+    os.environ['LC_ALL'] = 'C'
     _, in_filename = tempfile.mkstemp()
     _, out_filename = tempfile.mkstemp()
     print(in_filename)
@@ -100,15 +101,10 @@ def execute_workaround(input_data):
 
 
 def runShellCommand(commands, cwd=None):
-    try:
-        p = Popen(commands, stdout=PIPE, stderr=PIPE, cwd=cwd)
-        output, error = p.communicate()
-        if error:
-            raise misc.AlgorithmError(error.strip())
-    except CalledProcessError as e:
-        raise e
-    except misc.AlgorithmError as e:
-        raise e
+    p = Popen(commands, stdout=PIPE, stderr=PIPE, cwd=cwd)
+    output, error = p.communicate()
+    if error:
+        raise misc.AlgorithmError(error.decode('utf-8'))
 
 
 def test_train():
