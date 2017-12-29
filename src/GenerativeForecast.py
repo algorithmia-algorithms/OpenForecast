@@ -1,4 +1,3 @@
-
 import torch
 from src.modules import data_proc, graph, net_misc, envelope, misc
 torch.backends.cudnn.enabled = False
@@ -19,6 +18,10 @@ class InputGuard():
         self.attention_beam_width = 25
         self.future_beam_width = 10
         self.input_dropout = 0.45
+
+    def __init__(self, dictionary):
+        for key in dictionary:
+            setattr(self, key, dictionary[key])
 
 
 
