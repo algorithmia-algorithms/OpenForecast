@@ -40,6 +40,7 @@ def process_frames_initial(data, multiplier, beam_width):
         floated.append(new_dim)
     npdata = np.asarray(floated).astype(np.float)
     io_dims = npdata.shape[1]
+    print(io_dims)
     normalized_data, norm_boundaries = normalize_and_remove_outliers(npdata, io_dims, multiplier)
     x, y = prepare_x_y(normalized_data, beam_width)
     output = {'x': x, 'y': y}
@@ -68,8 +69,6 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
             elif not (-data[j, i] > max_delta):
                 print('clipped {} for being too far below the mean.'.format(str(data[j, i])))
                 data[j, i] = -max_delta
-
-
     for i in range(dimensions):
         numerator = np.subtract(data[:, i], norm_boundaries[i]['min'])
         data[:, i] = np.divide(numerator, norm_boundaries[i]['max'] - norm_boundaries[i]['min'])
