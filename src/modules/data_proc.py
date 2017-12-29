@@ -1,5 +1,5 @@
 import numpy as np
-from modules.misc import AlgorithmError, get_file
+from src.modules.misc import AlgorithmError, get_file
 
 
 def is_header(row):
@@ -10,7 +10,7 @@ def is_header(row):
         return True
 
 
-#For incremental training, we know what the header names are
+# For incremental training, we know what the header names are already so lets just pop them if they exist.
 def process_frames_incremental(data, state, multiplier):
     if is_header(data[0]):
         data.pop(0)
@@ -26,7 +26,7 @@ def process_frames_incremental(data, state, multiplier):
     data = {'x': x, 'y': y}
     return data
 
-
+# During initial training, we check if a header is present, if so we preserve the headers in the model for variable description.
 def process_frames_initial(data, multiplier, beam_width):
     if is_header(data[0]):
         headers = data.pop(0)
@@ -57,6 +57,8 @@ def prepare_x_y(data, beam_width):
     return x, y
 
 
+# We first remove outliers based on the new dataset.
+# However, we normalize based on the original training data. This is to make sure we're consistent in values fed into the network.
 def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=None):
     mean = np.mean(data, axis=0)
     sd = np.std(data, axis=0)
@@ -84,7 +86,8 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
             data[:, i] = np.divide(numerator, max - min)
     return data, norm_boundaries
 
-# used for reverting the normalization process for forecasts
+# used for reverting the normalization process for forecasts. The "norm_boundaries" variables are defined in
+# normalize_and_remove_outliers if no 'norm_boundaries' variable is provided.
 def revert_normalization(data, state):
     norm_boundaries = state['norm_boundaries']
     io_shape = state['io_width']
