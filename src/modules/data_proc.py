@@ -69,9 +69,13 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
             elif not (-data[j, i] > max_delta):
                 print('clipped {} for being too far below the mean.'.format(str(data[j, i])))
                 data[j, i] = -max_delta
-    for i in range(dimensions):
-        numerator = np.subtract(data[:, i], norm_boundaries[i]['min'])
-        data[:, i] = np.divide(numerator, norm_boundaries[i]['max'] - norm_boundaries[i]['min'])
+    if norm_boundaries != list():
+        for i in range(dimensions):
+            max = np.max(data[:, i], axis=0)
+            min = np.min(data[:, i], axis=0)
+            norm_boundaries.append({'max': max, 'min': min})
+            numerator = np.subtract(data[:, i], min)
+            data[:, i] = np.divide(numerator, max - min)
     return data, norm_boundaries
 
 # used for reverting the normalization process for forecasts
