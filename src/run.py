@@ -30,7 +30,7 @@ if __name__ == "__main__":
         base_learning_rate = 0.5
         gradient_multiplier = 1.0
         output = dict()
-        if input['mode'] == "forecast":
+        if guard.mode == "forecast":
             local_file = data_proc.get_file(guard.checkpoint_input_path)
             network, state = net_misc.load_checkpoint(local_file)
             if guard.data_path:
