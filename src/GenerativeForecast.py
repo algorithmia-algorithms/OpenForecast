@@ -19,7 +19,7 @@ class InputGuard():
         self.input_dropout = 0.45
 
 
-
+ 
 def process_input(input):
     guard = InputGuard()
 
