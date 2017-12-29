@@ -93,7 +93,7 @@ def execute_workaround(input_data):
     with open(in_filename, 'w') as f:
         json.dump(input_data.__dict__, f)
     runShellCommand(['python', 'run.py', in_filename, out_filename], cwd=os.path.dirname(os.path.realpath(__file__)))
-    with open(output_queue) as f:
+    with open(out_filename) as f:
         output = json.load(f)
     return output
 
