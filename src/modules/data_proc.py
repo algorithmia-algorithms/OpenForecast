@@ -75,6 +75,7 @@ def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=
             data[:, i] = np.divide(numerator, norm_boundaries[i]['max'] - norm_boundaries[i]['min'])
 
     else:
+        norm_boundaries = list()
         for i in range(dimensions):
             max = np.max(data[:, i], axis=0)
             min = np.min(data[:, i], axis=0)
