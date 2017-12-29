@@ -101,7 +101,7 @@ def execute_workaround(input_data):
 
 def runShellCommand(commands, cwd=None):
     try:
-        p = Popen(commands, stdout=STDOUT, stderr=STDOUT, cwd=cwd)
+        p = Popen(commands, stderr=STDOUT, cwd=cwd)
         p.wait()
         err = p.stdout.read()
         if len(err) > 0:
