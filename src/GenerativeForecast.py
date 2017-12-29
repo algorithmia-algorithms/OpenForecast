@@ -1,6 +1,6 @@
 import json
 from src.modules import misc
-import subprocess
+from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 import tempfile, os
 class InputGuard():
     def __init__(self):
@@ -101,8 +101,12 @@ def execute_workaround(input_data):
 
 def runShellCommand(commands, cwd=None):
     try:
-        subprocess.check_call(commands, cwd=cwd)
-    except subprocess.CalledProcessError as e:
+        p = Popen(commands, stdout=STDOUT, stderr=STDOUT, cwd=cwd)
+        p.wait()
+        err = p.stdout.read()
+        if len(err) > 0:
+            raise CalledProcessError(1, err)
+    except CalledProcessError as e:
         txt = "Error Code:\n" + str(e.returncode) + "\nError output:\n" + str(e.output)
         raise misc.AlgorithmError(txt)
 
