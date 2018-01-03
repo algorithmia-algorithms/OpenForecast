@@ -93,7 +93,9 @@ def execute_workaround(input_data):
     print(out_filename)
     with open(in_filename, 'w') as f:
         json.dump(input_data.__dict__, f)
-    runShellCommand(['python', 'src/run.py', in_filename, out_filename])
+    root_path = '/'.join(os.getcwd().split('/')[:-1])
+    print(root_path)
+    runShellCommand(['/opt/anaconda3/bin/python', 'src/run.py', in_filename, out_filename], cwd=root_path)
     with open(out_filename) as f:
         output = json.load(f)
     return output
@@ -103,8 +105,11 @@ def execute_workaround(input_data):
 def runShellCommand(commands, cwd=None):
     p = Popen(commands, stdout=PIPE, stderr=PIPE, cwd=cwd)
     output, error = p.communicate()
+    out_str = str(output.decode('utf-8'))
+    err_str = str(error.decode('utf-8'))
+    print(out_str)
     if error:
-        raise misc.AlgorithmError(error.decode('utf-8'))
+        raise misc.AlgorithmError(err_str)
 
 
 def test_train():
@@ -115,7 +120,7 @@ def test_train():
     # input['data_path'] = 'data://zeryx/forecasting_testing/sinewave_bulk.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/sinewave_incremental.csv'
     # input['data_path'] = "data://TimeSeries/GenerativeForecasting/btc-train_2.csv"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/sinewave_bulk.csv"
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/sinewave_v1.0_t0.csv"
     # input['data_path'] = 'data://zeryx/forecasting_testing/csdisco-train_1.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/sine_wave_train.csv'
     # input['data_path'] = "data://zeryx/forecasting_testing/funpokes-train.csv"
@@ -149,7 +154,7 @@ def test_forecast():
     # input['data_path'] = 'data://timeseries/generativeforecasting/sinewave_incremental.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/csdisco-test_2.csv'
     # input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
-    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t1_inf.t7"
+    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
     # input['checkpoint_input_path'] = "data://zeryx/forecasting_testing/csdisco_model.t7"
     # input['data_path'] = 'data://zeryx/forecasting_testing/btc-test_2.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/sine_wave_test.csv'
@@ -168,7 +173,7 @@ def test_forecast():
     print(input)
     return apply(input)
 
-if __name__ == "__main__":
-  result = test_forecast()
-#   # result = test_train()
+# if __name__ == "__main__":
+#   result = test_forecast()
+  # result = test_train()
 #   print(result)

@@ -1,6 +1,6 @@
 if __name__ == "__main__":
     import torch
-    from src.modules import data_proc, graph, net_misc, envelope
+    from src.modules import data_proc, graph, net_misc, envelope, misc
     import json
     import sys
     torch.backends.cudnn.enabled = False
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     def forecast(guard, outlier_removal_multiplier):
         output = dict()
-        local_file = data_proc.get_file(guard.checkpoint_input_path)
+        local_file = misc.get_file(guard.checkpoint_input_path)
         network, state = net_misc.load_checkpoint(local_file)
         if guard.data_path:
             guard.data_path = data_proc.get_frame(guard.data_path)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         output = dict()
         guard.data_path = data_proc.get_frame(guard.data_path)
         if guard.checkpoint_input_path:
-            local_file = data_proc.get_file(guard.checkpoint_input_path)
+            local_file = misc.get_file(guard.checkpoint_input_path)
             network, state = net_misc.load_checkpoint(local_file)
             data = data_proc.process_frames_incremental(guard.data_path, state, outlier_removal_multiplier)
             lr_rate = net_misc.determine_lr(data, state)

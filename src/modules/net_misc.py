@@ -10,7 +10,6 @@ from torch.autograd import Variable
 from math import isnan
 
 
-
 def create_forecasts(data_frame, network, state,  number_of_forecasts, future_length, noise_amount):
     if data_frame:
         criterion = nn.SmoothL1Loss().cuda().float()
