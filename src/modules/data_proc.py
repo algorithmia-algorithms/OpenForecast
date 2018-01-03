@@ -1,9 +1,5 @@
 import numpy as np
-<<<<<<< HEAD
-from src.modules.misc import AlgorithmError, get_file
-=======
 from src.modules import misc
->>>>>>> hack
 
 
 def is_header(row):
