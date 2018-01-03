@@ -1,5 +1,5 @@
 from uuid import uuid4
-from modules import graph, net, misc, data_proc
+from src.modules import graph, net, misc, data_proc
 import numpy as np
 import torch
 import copy

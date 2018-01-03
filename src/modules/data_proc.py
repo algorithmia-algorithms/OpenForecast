@@ -1,5 +1,5 @@
 import numpy as np
-from modules.misc import AlgorithmError, get_file
+from src.modules import misc
 
 
 def is_header(row):
@@ -20,7 +20,7 @@ def process_frames_incremental(data, state, multiplier):
     norms = state['norm_boundaries']
     io_width = state['io_width']
     if shape[1] != io_width:
-        raise AlgorithmError("data dimensions are different from expected, got {}\t expected {}.".format(str(shape[1]), str(io_width)))
+        raise misc.AlgorithmError("data dimensions are different from expected, got {}\t expected {}.".format(str(shape[1]), str(io_width)))
     data, _ = normalize_and_remove_outliers(data, io_width, multiplier, norms)
     x, y = prepare_x_y(data, beam_width)
     data = {'x': x, 'y': y}
@@ -98,7 +98,7 @@ def revert_normalization(data, state):
 
 
 def get_frame(remote_path):
-    local_file = get_file(remote_path)
+    local_file = misc.get_file(remote_path)
     with open(local_file) as f:
         lines = f.read().split('\n')
         csv = [x.split(',') for x in lines]

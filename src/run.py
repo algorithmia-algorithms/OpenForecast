@@ -1,6 +1,6 @@
 if __name__ == "__main__":
     import torch
-    from modules import data_proc, graph, net_misc, envelope
+    from src.modules import data_proc, graph, net_misc, envelope
     import json
     import sys
     torch.backends.cudnn.enabled = False

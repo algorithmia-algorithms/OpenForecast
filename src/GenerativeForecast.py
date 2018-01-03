@@ -93,7 +93,7 @@ def execute_workaround(input_data):
     print(out_filename)
     with open(in_filename, 'w') as f:
         json.dump(input_data.__dict__, f)
-    runShellCommand(['python', 'run.py', in_filename, out_filename], cwd=os.path.dirname(os.path.realpath(__file__)))
+    runShellCommand(['python', 'src/run.py', in_filename, out_filename])
     with open(out_filename) as f:
         output = json.load(f)
     return output
@@ -168,7 +168,7 @@ def test_forecast():
     print(input)
     return apply(input)
 
-# if __name__ == "__main__":
-#   result = test_forecast()
+if __name__ == "__main__":
+  result = test_forecast()
 #   # result = test_train()
 #   print(result)
