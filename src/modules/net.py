@@ -66,12 +66,12 @@ class Net(nn.Module):
         state['depth'] = self.depth
         state['max_history'] = self.max_history
         state['true_history'] = self.true_history
+        state['pred_history'] = self.pred_history
         state['prime_length'] = self.prime_length
         state['io_width'] = self.io_width
         state['attention_beam_width'] = self.attention_beam_width
         state['output_beam_width'] = self.output_beam_width
         state['gru1_h'] = self.gru1_h
-        state['pred_history'] = self.pred_history
         state['norm_boundaries'] = self.norm_boundaries
         state['prime_lr'] = self.prime_lr
         state['lr_mul'] = self.lr_multiplier
@@ -81,11 +81,6 @@ class Net(nn.Module):
     def initialize_meta(self, prime_length, norm_boundaries):
         self.norm_boundaries = norm_boundaries
         self.prime_length = prime_length
-
-    def clear_state(self):
-        self.gru1_h = Variable(torch.zeros(self.depth, 1, self.layer_width), requires_grad=False).cuda().float()
-        self.reset_history()
-
 
     def reset_history(self):
         self.pred_history = Variable(torch.zeros(self.max_history, self.io_width),
@@ -133,7 +128,7 @@ class Net(nn.Module):
         line_data.append(point.squeeze())
         for i in range(2, self.attention_beam_width+1):
             step = -i
-            hist_point = self.pred_history[step]
+            hist_point = self.true_history[step]
             line_data.append(hist_point)
         line = torch.cat(line_data, 0).view(1, self.io_width * self.attention_beam_width)
         return line

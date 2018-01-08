@@ -1,10 +1,10 @@
 from uuid import uuid4
 import numpy as np
-
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from src.modules import misc, data_proc
+from src.modules import misc
+
 
 def create_graph(envelope, state, forecast_length, noise_percentage):
     graph_file_name = "/tmp/{}.png".format(str(uuid4()))
