@@ -96,6 +96,7 @@ class Net(nn.Module):
             output = self.process(line)
             self.pred_history = torch.cat((self.pred_history, output[0]))
             self.pred_history = self.pred_history[1:]
+            self.true_history = self.pred_history
             outputs.append(output)
         outputs = torch.cat(outputs, 1)
         return outputs
