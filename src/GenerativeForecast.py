@@ -86,7 +86,7 @@ def execute_workaround(input_data):
     print(out_filename)
     with open(in_filename, 'w') as f:
         json.dump(input_data.__dict__, f)
-    root_path = '/'.join(os.getcwd().split('/')[:-1])
+    root_path = '/'.join(os.path.realpath(__file__).split('/')[:-2])
     print(root_path)
     runShellCommand(['/opt/anaconda3/bin/python', 'src/run.py', in_filename, out_filename], cwd=root_path)
     with open(out_filename) as f:
