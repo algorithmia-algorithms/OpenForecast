@@ -18,7 +18,7 @@ class InputGuard():
         self.input_dropout = 0.45
 
 
-
+ 
 def process_input(input):
     guard = InputGuard()
 
@@ -93,12 +93,6 @@ def execute_workaround(input_data):
         output = json.load(f)
     return output
 
-def apply(input):
-    guard = process_input(input)
-    output = execute_workaround(guard)
-
-    return output
-
 def runShellCommand(commands, cwd=None):
     p = Popen(commands, stdout=PIPE, stderr=PIPE, cwd=cwd)
     output, error = p.communicate()
@@ -107,6 +101,13 @@ def runShellCommand(commands, cwd=None):
     print(out_str)
     if error:
         raise misc.AlgorithmError(err_str)
+
+
+def apply(input):
+    guard = process_input(input)
+    output = execute_workaround(guard)
+
+    return output
 
 def test_train():
     input = dict()
