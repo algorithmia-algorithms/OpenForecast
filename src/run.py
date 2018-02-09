@@ -5,7 +5,7 @@ if __name__ == "__main__":
     import sys
     torch.backends.cudnn.enabled = False
 
- 
+
     class InputGuard():
         def __init__(self):
             self.mode = None
