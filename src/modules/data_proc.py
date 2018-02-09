@@ -11,7 +11,7 @@ def is_header(row):
 
 
 # For incremental training, we know what the header names are already so lets just pop them if they exist.
-def process_frames_incremental(data, state, multiplier):
+def process_sequence_incremental(data, state, multiplier):
     if is_header(data[0]):
         data.pop(0)
     data = np.asarray(data).astype(np.float)
@@ -27,7 +27,7 @@ def process_frames_incremental(data, state, multiplier):
     return data
 
 # During initial training, we check if a header is present, if so we preserve the headers in the model for variable description.
-def process_frames_initial(data, multiplier, beam_width):
+def process_sequence_initial(data, multiplier, beam_width):
     if is_header(data[0]):
         headers = data.pop(0)
     else:

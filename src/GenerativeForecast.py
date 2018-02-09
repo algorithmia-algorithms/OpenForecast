@@ -13,8 +13,8 @@ class InputGuard():
         self.forecast_size = 15
         self.layer_width = 51
         self.io_noise = 0.04
-        self.attention_beam_width = 25
-        self.future_beam_width = 10
+        self.attention_beam_width = 45
+        self.future_beam_width = 1
         self.input_dropout = 0.45
 
 
@@ -88,7 +88,8 @@ def execute_workaround(input_data):
         json.dump(input_data.__dict__, f)
     root_path = '/'.join(os.path.realpath(__file__).split('/')[:-2])
     print(root_path)
-    runShellCommand(['/opt/anaconda3/bin/python', 'src/run.py', in_filename, out_filename], cwd=root_path)
+    # runShellCommand(['/opt/anaconda3/bin/python', 'src/run.py', in_filename, out_filename], cwd=root_path)
+    runShellCommand(['python3', 'src/run.py', in_filename, out_filename], cwd=root_path)
     with open(out_filename) as f:
         output = json.load(f)
     return output
@@ -129,7 +130,7 @@ def test_train():
     # input['checkpoint_output_path'] = "data://zeryx/forecasting_testing/sinewave_incremented_model.t7"
     # input['checkpoint_input_path'] = "data://zeryx/forecasting_testing/sinewave_bulk_model.t7"
     input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
-    input['iterations'] = 15
+    input['iterations'] = 20
     input['io_noise'] = 0.06
     input['input_dropout'] = 0.45
     return apply(input)
@@ -143,7 +144,7 @@ def test_forecast():
     # input['data_path'] = 'data://timeseries/generativeforecasting/sinewave_incremental.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/csdisco-test_2.csv'
     # input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
-    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
+    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v5.0_t0.t7"
     # input['checkpoint_input_path'] = "data://zeryx/forecasting_testing/csdisco_model.t7"
     # input['data_path'] = 'data://zeryx/forecasting_testing/btc-test_2.csv'
     # input['data_path'] = 'data://zeryx/forecasting_testing/sine_wave_test.csv'
@@ -162,7 +163,7 @@ def test_forecast():
     print(input)
     return apply(input)
 
-# if __name__ == "__main__":
-#   result = test_forecast()
-  # result = test_train()
-#   print(result)
+#if __name__ == "__main__":
+  # result = test_forecast()
+  #result = test_train()
+  #print(result)

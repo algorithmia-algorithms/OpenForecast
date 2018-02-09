@@ -32,8 +32,8 @@ if __name__ == "__main__":
         network, state = net_misc.load_checkpoint(local_file)
         if guard.data_path:
             guard.data_path = data_proc.get_frame(guard.data_path)
-            guard.data_path = data_proc.process_frames_incremental(guard.data_path, state,
-                                                                   outlier_removal_multiplier)
+            guard.data_path = data_proc.process_sequence_incremental(guard.data_path, state,
+                                                                     outlier_removal_multiplier)
 
         normal_forecast, raw_forecast, state = net_misc.create_forecasts(guard.data_path, network, state,
                                                                          guard.iterations, guard.forecast_size,
@@ -56,12 +56,12 @@ if __name__ == "__main__":
         if guard.checkpoint_input_path:
             local_file = misc.get_file(guard.checkpoint_input_path)
             network, state = net_misc.load_checkpoint(local_file)
-            data = data_proc.process_frames_incremental(guard.data_path, state, outlier_removal_multiplier)
+            data = data_proc.process_sequence_incremental(guard.data_path, state, outlier_removal_multiplier)
             lr_rate = net_misc.determine_lr(data, state)
         else:
-            data, norm_boundaries, headers = data_proc.process_frames_initial(guard.data_path,
-                                                                              outlier_removal_multiplier,
-                                                                              beam_width=guard.future_beam_width)
+            data, norm_boundaries, headers = data_proc.process_sequence_initial(guard.data_path,
+                                                                                outlier_removal_multiplier,
+                                                                                beam_width=guard.future_beam_width)
             io_dim = len(norm_boundaries)
             learning_rate = float(base_learning_rate) / io_dim
             network, state = net_misc.initialize_network(io_dim=io_dim, layer_width=guard.layer_width,
