@@ -95,8 +95,10 @@ def revert_normalization(data, state):
     for i in range(io_shape):
         min = norm_boundaries[i]['min']
         max = norm_boundaries[i]['max']
-        output[:, i] = np.multiply(data[:, i], (max - min))
-        output[:, i] = np.add(data[:, i], min)
+        multiplier = max-min
+        intermediate = np.multiply(data[:, i], multiplier)
+        result = np.add(intermediate, min)
+        output[:, i] = result
     return output
 
 
