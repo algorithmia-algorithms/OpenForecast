@@ -163,7 +163,7 @@ def test_forecast():
     print(input)
     return apply(input)
 
-#if __name__ == "__main__":
+# if __name__ == "__main__":
   # result = test_forecast()
-  #result = test_train()
-  #print(result)
+  # result = test_train()
+  # print(result)

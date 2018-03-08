@@ -64,17 +64,18 @@ if __name__ == "__main__":
                                                                                 beam_width=guard.future_beam_width)
             io_dim = len(norm_boundaries)
             learning_rate = float(base_learning_rate) / io_dim
-            network, state = net_misc.initialize_network(io_dim=io_dim, layer_width=guard.layer_width,
+            network, state = net_misc.initialize_network(io_width=io_dim, layer_width=guard.layer_width,
                                                          max_history=max_history,
                                                          initial_lr=learning_rate, lr_multiplier=gradient_multiplier,
                                                          io_noise=guard.io_noise,
+                                                         training_length=data['x'].shape[0],
                                                          attention_beam_width=guard.attention_beam_width,
                                                          future_beam_width=guard.future_beam_width, headers=headers)
             network.initialize_meta(len(data['x']), norm_boundaries)
             lr_rate = state['prime_lr']
-        error, network = net_misc.train_autogenerative_model(data_frame=data, network=network,
+        error, base_network, network = net_misc.train_autogenerative_model(data_frame=data, network=network,
                                                              checkpoint_state=state, iterations=guard.iterations,
-                                                             learning_rate=lr_rate, epochs=guard.epochs,
+                                                             epochs=guard.epochs,
                                                              drop_percentage=guard.input_dropout)
         output['checkpoint_output_path'] = net_misc.save_model(network, guard.checkpoint_output_path)
         output['final_error'] = float(error)

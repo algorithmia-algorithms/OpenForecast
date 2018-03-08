@@ -3,6 +3,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 import math
+import copy
 from random import randrange
 
 class GaussianNoise(nn.Module):
@@ -21,44 +22,52 @@ class GaussianNoise(nn.Module):
 
 
 class Net(nn.Module):
-    def __init__(self, layer_width=45,
-                 initial_lr=0.8,
-                 lr_multiplier=1,
-                 max_history=50,
-                 io_width=1,
-                 io_noise=0.04,
-                 attention_beam_width=1,
-                 future_beam_width=1,
-                 headers=None):
+    def __init__(self, state):
         super(Net, self).__init__()
-        self.layer_width = layer_width
-        self.max_history = max_history
-        self.prime_lr = initial_lr
-        self.lr_multiplier = lr_multiplier
-        self.norm_boundaries = None
-        self.prime_length = None
-        self.io_width = io_width
-        self.headers = headers
-        self.io_noise = GaussianNoise(stddev=io_noise)
-        self.depth = int(math.ceil(math.log(io_width))+1)
-        self.attention_beam_width = attention_beam_width
-        self.output_beam_width = future_beam_width
-        self.lin1 = nn.Linear(io_width * self.attention_beam_width, self.layer_width)
-        self.gru1 = nn.GRU(self.layer_width, self.layer_width, self.depth)
-        self.lin2 = nn.Linear(self.layer_width, self.io_width * self.output_beam_width)
+        self.hidden_width = state['hidden_width']
+        self.max_history = state['max_history']
+        self.prime_lr = state['prime_lr']
+        self.lr_multiplier = state['lr_multiplier']
+        if 'norm_boundaries' in state:
+            self.norm_boundaries = state['norm_boundaries']
+        else:
+            self.norm_boundaries = None
+        self.prime_length = state['prime_length']
+        self.io_width = state['io_width']
+        self.headers = state['headers']
+        self.stride_width = 2
+        self.io_noise = GaussianNoise(stddev=state['io_noise'])
+        # self.depth = int(math.log(self.prime_length)-4) + math.ceil(math.log(self.io_width))
+        # if self.depth < 2:
+        #     self.depth = 2
+        # if self.depth > 8:
+        #     self.depth = 7
+        self.depth = 5
+        self.attention_beam_width = state['attention_beam_width']
+        self.output_beam_width = state['output_beam_width']
+        self.lin1 = nn.Linear(self.io_width * self.attention_beam_width, self.hidden_width)
+        # self.gru1 = drnn.DRNN(self.hidden_width, self.hidden_width, self.depth, stride_width=self.stride_width)
+        self.gru1 = nn.GRU(self.hidden_width, self.hidden_width, self.depth)
+        self.lin2 = nn.Linear(self.hidden_width, self.io_width * self.output_beam_width)
         self.true_history = Variable(torch.zeros(self.max_history, self.io_width), requires_grad=False).cuda().float()
         self.pred_history = Variable(torch.zeros(self.max_history, self.io_width), requires_grad=False).cuda().float()
-        self.gru1_h = Variable(torch.zeros(self.depth, 1, self.layer_width), requires_grad=False).cuda().float()
+        # self.gru1_h = Variable(torch.zeros(self.stride_width ** self.depth, 1, 1, self.hidden_width)).cuda().float()
+        self.gru1_h = Variable(torch.zeros(self.depth, 1, self.hidden_width), requires_grad=False).cuda().float()
 
     def perturb(self, noise_amount=0):
         noise = GaussianNoise(stddev=noise_amount)
-        self.gru1_h = noise(self.gru1_h)
+        self.gru1_h = [noise(vec) for vec in self.gru1_h]
         self.pred_history = noise(self.pred_history)
 
     def load_mutable_state(self, state):
         self.gru1_h = state['gru1_h']
         self.pred_history = state['pred_history']
         self.true_history = state['true_history']
+
+    def copy_model(self):
+        state = self.get_state()
+        copied_dict = copy.deepcopy(self.state_dict())
+        return state, copied_dict
 
     def get_state(self):
         state = dict()
@@ -68,12 +77,14 @@ class Net(nn.Module):
         state['pred_history'] = self.pred_history
         state['prime_length'] = self.prime_length
         state['io_width'] = self.io_width
+        state['hidden_width'] = self.hidden_width
         state['attention_beam_width'] = self.attention_beam_width
         state['output_beam_width'] = self.output_beam_width
         state['gru1_h'] = self.gru1_h
+        state['io_noise'] = self.io_noise
         state['norm_boundaries'] = self.norm_boundaries
         state['prime_lr'] = self.prime_lr
-        state['lr_mul'] = self.lr_multiplier
+        state['lr_multiplier'] = self.lr_multiplier
         state['headers'] = self.headers
         return state
 
@@ -136,23 +147,17 @@ class Net(nn.Module):
 
     def process(self, input):
         input = self.io_noise(input)
-        lin_1 = self.lin1(input).view(1, 1, self.layer_width)
-        gru_out, self.gru1_h = self.gru1(lin_1, self.gru1_h)
-        gru_out = gru_out.view(1, self.layer_width)
+        lin_1 = self.lin1(input).view(1, 1, self.hidden_width)
+        gru_out, self.gru1_h = self.gru1.forward(lin_1, self.gru1_h)
+        # gru_out, self.gru1_h = self.gru1.forward(lin_1, self.gru1_h)
+        gru_out = gru_out.view(1, self.hidden_width)
         output = self.lin2(gru_out).view(self.output_beam_width, 1, self.io_width)
         return output
 
     def modied_mse_forecast_loss(self, input, target):
         mse_loss = nn.MSELoss().cuda()
-        forecast_loss = Variable(torch.zeros(1)).cuda()
-        for i in range(self.output_beam_width):
-            input_slice = input[i]
-            target_slice = target[i]
-            slice_loss = mse_loss(input_slice, target_slice)
-            slice_loss = torch.div(slice_loss, (i+1))
-            forecast_loss = torch.add(forecast_loss, slice_loss)
-        forecast_loss = torch.div(forecast_loss, self.output_beam_width)
-        return forecast_loss
+        loss = mse_loss(input[0], target[0])
+        return loss
 
 def gradClamp(parameters, clip=2):
     for p in parameters:
