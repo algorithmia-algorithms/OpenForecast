@@ -10,7 +10,6 @@ class InputGuard:
         self.data_path = None
         self.checkpoint_input_path = None
         self.checkpoint_output_path = None
-        self.checkpoint_base_path = "data://.algo/timeseries/generativeforecast/temp/base_model_t0.zip"
         self.graph_save_path = None
         self.iterations = 10
         self.forecast_size = 15
@@ -112,7 +111,6 @@ def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gr
     if guard.checkpoint_input_path:
         network, state = data_proc.load_network_from_algo(guard.checkpoint_input_path)
         data = data_proc.process_sequence_incremental(guard.data_path, state, outlier_removal_multiplier)
-        # lr_rate = network_processing.determine_lr(data, state)
     else:
         data, norm_boundaries, headers = data_proc.process_sequence_initial(guard.data_path,
                                                                             outlier_removal_multiplier)
@@ -125,11 +123,9 @@ def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gr
                                                                training_length=data['x'].shape[0],
                                                                attention_beam_width=guard.attention_beam_width, headers=headers)
         network.initialize_meta(len(data['x']), norm_boundaries)
-        # lr_rate = state['prime_lr']
-    error, checkpoint, base = network_processing.train_autogenerative_model(data_frame=data, network=network,
+    error, checkpoint = network_processing.train_autogenerative_model(data_frame=data, network=network,
                                                                    checkpoint_state=state, iterations=guard.iterations)
     output['checkpoint_output_path'] = data_proc.save_network_to_algo(checkpoint, guard.checkpoint_output_path)
-    output['base_output_path'] = data_proc.save_network_to_algo(base, guard.checkpoint_base_path)
     output['final_error'] = float(error)
     return output
 

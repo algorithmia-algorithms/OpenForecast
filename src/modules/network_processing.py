@@ -83,11 +83,9 @@ def train_autogenerative_model(data_frame, network, checkpoint_state, iterations
         print('total time: {}'.format(str(perf_counter() - diff_time)))
         optimizer.step()
     network.load_mutable_state(checkpoint_state)
-    save_portable(network, "src.modules.net_def", "/tmp/temp.zip")
-    base_checkpoint = load_portable("/tmp/temp.zip")
     network.forward(input)
     print('best overall training loss: {}'.format(str(best_loss)))
-    return best_loss, network, base_checkpoint
+    return best_loss, network
 
 # this determines the learning rate based on comparing the prime length to the current incremental length
 def determine_lr(data, state):
