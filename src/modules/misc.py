@@ -12,12 +12,11 @@ class AlgorithmError(Exception):
         return repr(self.value)
 
 
-
-def get_file(remote_file_path):
+def get_data(remote_file_path):
     try:
         result = client.file(remote_file_path).getFile().name
     except ConnectionError:
-        result = get_file(remote_file_path)
+        result = get_data(remote_file_path)
     return result
 
 

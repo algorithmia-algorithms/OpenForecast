@@ -1,17 +1,15 @@
 import numpy as np
 
 
-def create_envelope(forecasts, future_length, state):
+def create_envelope(forecasts, future_length):
     envelope = {'first_deviation': {'lower_bound': [], 'upper_bound': []}, 'second_deviation': {'lower_bound': [], 'upper_bound': []}, 'mean': [], 'standard_deviation': []}
     for i in range(future_length):
         step = []
-        for j in range(forecasts.shape[1]):
-            step.append(forecasts[i, j])
+        for j in range(forecasts.shape[0]):
+            step.append(forecasts[j, i])
         step = np.asarray(step)
         mean = np.mean(step, axis=0)
         sd = np.std(step, axis=0)
-        # mean = np.reshape(mean, (1, forecasts.shape[2]))
-        # sd = sd, (1, forecasts.shape[2]))
         envelope['mean'].append(mean)
         envelope['standard_deviation'].append(sd)
         envelope['first_deviation']['upper_bound'].append(mean + sd)

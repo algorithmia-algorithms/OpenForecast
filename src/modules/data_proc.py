@@ -1,6 +1,7 @@
 import numpy as np
 from src.modules import misc
-
+from ergonomics.serialization import save_portable, load_portable
+from uuid import uuid4
 
 def is_header(row):
     try:
@@ -16,18 +17,17 @@ def process_sequence_incremental(data, state, multiplier):
         data.pop(0)
     data = np.asarray(data).astype(np.float)
     shape = data.shape
-    beam_width = state['output_beam_width']
     norms = state['norm_boundaries']
     io_width = state['io_width']
     if shape[1] != io_width:
         raise misc.AlgorithmError("data dimensions are different from expected, got {}\t expected {}.".format(str(shape[1]), str(io_width)))
     data, _ = normalize_and_remove_outliers(data, io_width, multiplier, norms)
-    x, y = prepare_x_y(data, beam_width)
+    x, y = prepare_x_y(data)
     data = {'x': x, 'y': y}
     return data
 
 # During initial training, we check if a header is present, if so we preserve the headers in the model for variable description.
-def process_sequence_initial(data, multiplier, beam_width):
+def process_sequence_initial(data, multiplier):
     if is_header(data[0]):
         headers = data.pop(0)
     else:
@@ -42,12 +42,13 @@ def process_sequence_initial(data, multiplier, beam_width):
     io_dims = npdata.shape[1]
     print(io_dims)
     normalized_data, norm_boundaries = normalize_and_remove_outliers(npdata, io_dims, multiplier)
-    x, y = prepare_x_y(normalized_data, beam_width)
+    x, y = prepare_x_y(normalized_data)
     output = {'x': x, 'y': y}
     return output, norm_boundaries, headers
 
 
-def prepare_x_y(data, beam_width):
+def prepare_x_y(data):
+    beam_width = 1
     x = data[:-(beam_width+1)]
     y = []
     for i in range(1, beam_width+1):
@@ -58,7 +59,8 @@ def prepare_x_y(data, beam_width):
 
 
 # We first remove outliers based on the new dataset.
-# However, we normalize based on the original training data. This is to make sure we're consistent in values fed into the network.
+# However, we normalize based on the original training data.
+# This is to make sure we're consistent in values fed into the network.
 def normalize_and_remove_outliers(data, dimensions, multiplier, norm_boundaries=None):
     mean = np.mean(data, axis=0)
     sd = np.std(data, axis=0)
@@ -103,9 +105,25 @@ def revert_normalization(data, state):
 
 
 def get_frame(remote_path):
-    local_file = misc.get_file(remote_path)
+    local_file = misc.get_data(remote_path)
     with open(local_file) as f:
         lines = f.read().split('\n')
         csv = [x.split(',') for x in lines]
     csv.pop(-1)
     return csv
+
+
+def save_network_to_algo(network, remote_file_path):
+    network_def_path = "src.modules.net_def"
+    local_file_path = "/tmp/{}".format(str(uuid4()))
+    save_portable(network, network_def_path, local_file_path)
+    misc.put_file(local_file_path, remote_file_path)
+    return remote_file_path
+
+
+def load_network_from_algo(remote_file_path):
+    local_file_path = misc.get_data(remote_file_path)
+    network = load_portable(local_file_path)
+    state = network.get_state()
+    return network, state
+
