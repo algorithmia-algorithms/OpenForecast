@@ -10,6 +10,7 @@ class InputGuard:
         self.data_path = None
         self.checkpoint_input_path = None
         self.checkpoint_output_path = None
+        self.checkpoint_base_path = "data://.algo/timeseries/generativeforecast/temp/base_model_t0.zip"
         self.graph_save_path = None
         self.iterations = 10
         self.forecast_size = 15
@@ -125,9 +126,10 @@ def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gr
                                                                attention_beam_width=guard.attention_beam_width, headers=headers)
         network.initialize_meta(len(data['x']), norm_boundaries)
         # lr_rate = state['prime_lr']
-    error, network = network_processing.train_autogenerative_model(data_frame=data, network=network,
+    error, checkpoint, base = network_processing.train_autogenerative_model(data_frame=data, network=network,
                                                                    checkpoint_state=state, iterations=guard.iterations)
-    output['checkpoint_output_path'] = data_proc.save_network_to_algo(network, guard.checkpoint_output_path)
+    output['checkpoint_output_path'] = data_proc.save_network_to_algo(checkpoint, guard.checkpoint_output_path)
+    output['base_output_path'] = data_proc.save_network_to_algo(base, guard.checkpoint_base_path)
     output['final_error'] = float(error)
     return output
 
@@ -153,11 +155,10 @@ def test_train():
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t0.csv"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
     input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/apidata_v0.0_t0.zip"
-    input['iterations'] = 20
+    input['iterations'] = 2
     input['io_noise'] = 0.04
     input['hidden_width'] = 100
-    input['future_beam_width'] = 1
-    input['attention_beam_width'] = 50
+    input['attention_beam_width'] = 200
     return apply(input)
 
 
@@ -168,13 +169,14 @@ def test_forecast():
     input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/apidata_v0.0_t0.zip"
     input['graph_save_path'] = "data://timeseries/generativeforecasting/my_sinegraph.png"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t1.csv"
-    input['forecast_size'] = 100
+    input['forecast_size'] = 200
     input['iterations'] = 20
     input['io_noise'] = 0.04
     print(input)
     return apply(input)
 
 if __name__ == "__main__":
-  result = test_forecast()
-  # result = test_train()
+  # result = test_forecast()
+  result = test_train()
   print(result)
+

@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch import optim
 from torch.autograd import Variable
-
+from ergonomics.serialization import save_portable, load_portable
 from src.GenerativeForecast import cuda
 from src.modules.net_def import net
 from . import data_proc
@@ -52,7 +52,7 @@ def train_autogenerative_model(data_frame, network, checkpoint_state, iterations
     criterion = nn.MSELoss()
     best_loss = 1
     best_state = None
-    optimizer = optim.Adagrad(network.parameters())
+    optimizer = optim.Adam(network.parameters(), lr=3e-3, weight_decay=1e-4)
     print("ready to pre-train")
     cur_iter = 0
     while True:
@@ -78,20 +78,16 @@ def train_autogenerative_model(data_frame, network, checkpoint_state, iterations
         else:
             cur_iter += 1
             print('training loss: {}'.format(str(loss_cpu)))
-        # after_proc_t = perf_counter()
         loss.backward()
-        # loss_t = perf_counter()
-        # print("backprop took: {} s".format(str(loss_t - after_proc_t)))
         network.gradClamp()
         print('total time: {}'.format(str(perf_counter() - diff_time)))
-        diff_time = perf_counter()
         optimizer.step()
-        # optim_t = perf_counter()
-        # print("optimization took: {} s".format(str(optim_t - diff_time)))
     network.load_mutable_state(checkpoint_state)
+    save_portable(network, "src.modules.net_def", "/tmp/temp.zip")
+    base_checkpoint = load_portable("/tmp/temp.zip")
     network.forward(input)
     print('best overall training loss: {}'.format(str(best_loss)))
-    return best_loss, network
+    return best_loss, network, base_checkpoint
 
 # this determines the learning rate based on comparing the prime length to the current incremental length
 def determine_lr(data, state):
