@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from src.modules import data_proc, graph, envelope, misc
 from src.modules import network_processing
-cuda = False
 
 
 class InputGuard:

@@ -7,10 +7,9 @@ import torch
 from torch import nn
 from torch import optim
 from torch.autograd import Variable
-from src.GenerativeForecast import cuda
 from src.modules.net_def import net
 from . import data_proc
-
+cuda = False
 
 def create_forecasts(data_frame, network, state,  number_of_forecasts, future_length, noise_amount):
     if data_frame:
