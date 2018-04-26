@@ -2,7 +2,7 @@ import numpy as np
 from src.modules import misc
 from ergonomics.serialization import save_portable, load_portable
 from uuid import uuid4
-
+import math
 def is_header(row):
     try:
         _ = float(row[0])
@@ -15,7 +15,11 @@ def is_header(row):
 def process_sequence_incremental(data, state, multiplier):
     if is_header(data[0]):
         data.pop(0)
-    data = np.asarray(data).astype(np.float)
+    step_size = state['step_size']
+    objective = []
+    for i in range(0, len(data), step_size):
+        objective.append(data[i])
+    data = np.asarray(objective).astype(np.float)
     shape = data.shape
     norms = state['norm_boundaries']
     io_width = state['io_width']
@@ -33,7 +37,15 @@ def process_sequence_initial(data, multiplier):
     else:
         headers = np.arange(len(data[0]), dtype=str).tolist()
     floated = []
-    for elm in data:
+    if len(data) >= 5000:
+        step_size = int(math.ceil(len(data)/5000))
+        objective = []
+        for i in range(0, len(data), step_size):
+            objective.append(data[i])
+    else:
+        step_size = 1
+        objective = data
+    for elm in objective:
         new_dim = []
         for dim in elm:
             new_dim.append(float(dim))
@@ -44,7 +56,7 @@ def process_sequence_initial(data, multiplier):
     normalized_data, norm_boundaries = normalize_and_remove_outliers(npdata, io_dims, multiplier)
     x, y = prepare_x_y(normalized_data)
     output = {'x': x, 'y': y}
-    return output, norm_boundaries, headers
+    return output, norm_boundaries, headers, step_size
 
 
 def prepare_x_y(data):

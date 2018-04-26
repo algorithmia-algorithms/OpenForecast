@@ -11,7 +11,7 @@ def create_graph(envelope, state, forecast_length, noise_percentage):
     pred_history = state['pred_history'].cpu().data.numpy()
     true_history = state['true_history'].cpu().data.numpy()
     headers = state['headers']
-    if true_history.shape[0] < forecast_length:
+    if true_history.shape[0] <= forecast_length:
         true_past = true_history
         pred_past = pred_history
         gold_length = len(true_history)

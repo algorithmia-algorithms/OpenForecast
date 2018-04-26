@@ -7,7 +7,6 @@ import torch
 from torch import nn
 from torch import optim
 from torch.autograd import Variable
-from ergonomics.serialization import save_portable, load_portable
 from src.GenerativeForecast import cuda
 from src.modules.net_def import net
 from . import data_proc
@@ -50,22 +49,27 @@ def train_autogenerative_model(data_frame, network, checkpoint_state, iterations
         input = input.cuda()
         target = target.cuda()
     criterion = nn.MSELoss()
-    best_loss = 1
+    best_loss = 10000000
     best_state = None
     optimizer = optim.Adam(network.parameters(), lr=3e-3, weight_decay=1e-4)
-    print("ready to pre-train")
+    print("ready to train")
+    start_time = perf_counter()
     cur_iter = 0
+    tau = 1e-1
     while True:
         if cur_iter >= iterations:
             break
-        diff_time = perf_counter()
+        time_delta = perf_counter()
         network.load_mutable_state(checkpoint_state)
         optimizer.zero_grad()
         network.reset_history()
-        output = network(input)
+        output, ponder_cost = network(input)
         loss = criterion(output, target)
-        loss_cpu = loss.detach().cpu().data.numpy()[0]
-
+        ponder_loss = ponder_cost * tau
+        loss_hat = loss + ponder_loss
+        loss_cpu = loss_hat.item()
+        print("ponder loss: {}".format(str(ponder_loss.data.numpy()[0])))
+        print("non-ponder loss: {}".format(str(loss.data.numpy())))
         if loss_cpu <= best_loss:
             best_loss = loss_cpu
             best_state = copy.deepcopy(network.state_dict())
@@ -79,9 +83,10 @@ def train_autogenerative_model(data_frame, network, checkpoint_state, iterations
             cur_iter += 1
             print('training loss: {}'.format(str(loss_cpu)))
         loss.backward()
-        network.gradClamp()
-        print('total time: {}'.format(str(perf_counter() - diff_time)))
+        # network.gradClamp()
+        print('total time: {}'.format(str(perf_counter() - start_time)))
         optimizer.step()
+        print('delta time: {}'.format(str(perf_counter() - time_delta)))
     network.load_mutable_state(checkpoint_state)
     network.forward(input)
     print('best overall training loss: {}'.format(str(best_loss)))
@@ -96,11 +101,11 @@ def determine_lr(data, state):
 
 
 
-def initialize_network(io_dim, layer_width, max_history, initial_lr, lr_multiplier, io_noise, training_length,
+def initialize_network(io_dim, layer_width, max_history, initial_lr, lr_multiplier, io_noise, perplexity,
                        attention_beam_width, headers):
     network = net.Net(hidden_width=layer_width, io_width=io_dim, max_history=max_history, initial_lr=initial_lr,
                       lr_multiplier=lr_multiplier, io_noise=io_noise, attention_beam_width=attention_beam_width,
-                      headers=headers, training_length=training_length).float()
+                      headers=headers, perplexity=perplexity).float()
     if cuda:
         network = network.cuda()
     state = network.get_state()

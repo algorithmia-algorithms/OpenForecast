@@ -15,8 +15,8 @@ class InputGuard:
         self.forecast_size = 15
         self.layer_width = 51
         self.io_noise = 0.04
+        self.perplexity = 55
         self.attention_beam_width = 45
-        self.future_beam_width = 1
         self.input_dropout = 0.45
 
 
@@ -44,8 +44,8 @@ def process_input(input):
             guard.layer_width = type_check(input, 'hidden_width', int)
         if 'attention_beam_width' in input:
             guard.attention_beam_width = type_check(input, 'attention_beam_width', int)
-        if 'future_beam_width' in input:
-            guard.future_beam_width = type_check(input, 'future_beam_width', int)
+        if 'perplexity' in input:
+            guard.perplexity = type_check(input, 'perplexity', float)
         if 'input_dropout' in input:
             guard.input_dropout = type_check(input, 'input_dropout', float)
         if 'iterations' in input:
@@ -112,7 +112,7 @@ def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gr
         network, state = data_proc.load_network_from_algo(guard.checkpoint_input_path)
         data = data_proc.process_sequence_incremental(guard.data_path, state, outlier_removal_multiplier)
     else:
-        data, norm_boundaries, headers = data_proc.process_sequence_initial(guard.data_path,
+        data, norm_boundaries, headers, step_size = data_proc.process_sequence_initial(guard.data_path,
                                                                             outlier_removal_multiplier)
         io_dim = len(norm_boundaries)
         learning_rate = float(base_learning_rate) / io_dim
@@ -120,9 +120,9 @@ def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gr
                                                                max_history=max_history,
                                                                initial_lr=learning_rate, lr_multiplier=gradient_multiplier,
                                                                io_noise=guard.io_noise,
-                                                               training_length=data['x'].shape[0],
+                                                               perplexity=guard.perplexity,
                                                                attention_beam_width=guard.attention_beam_width, headers=headers)
-        network.initialize_meta(len(data['x']), norm_boundaries)
+        network.initialize_meta(len(data['x']), norm_boundaries, step_size)
     error, checkpoint = network_processing.train_autogenerative_model(data_frame=data, network=network,
                                                                    checkpoint_state=state, iterations=guard.iterations)
     output['checkpoint_output_path'] = data_proc.save_network_to_algo(checkpoint, guard.checkpoint_output_path)
@@ -150,11 +150,12 @@ def test_train():
     input['mode'] = "train"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t0.csv"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
-    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/apidata_v0.0_t0.zip"
-    input['iterations'] = 2
+    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/apidata_v0.2.5_t0_fast.zip"
+    input['iterations'] = 100
     input['io_noise'] = 0.04
     input['hidden_width'] = 100
-    input['attention_beam_width'] = 200
+    input['perplexity'] = 0.99
+    input['attention_beam_width'] = 80
     return apply(input)
 
 
@@ -162,11 +163,11 @@ def test_forecast():
     input = dict()
     input['mode'] = "forecast"
 
-    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/apidata_v0.0_t0.zip"
+    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/apidata_v0.2.5_t0_fast.zip"
     input['graph_save_path'] = "data://timeseries/generativeforecasting/my_sinegraph.png"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t1.csv"
-    input['forecast_size'] = 200
-    input['iterations'] = 20
+    # input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t1.csv"
+    input['forecast_size'] = 150
+    input['iterations'] = 1
     input['io_noise'] = 0.04
     print(input)
     return apply(input)
