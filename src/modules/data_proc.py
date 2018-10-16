@@ -1,6 +1,7 @@
 import numpy as np
 from src.modules import misc
-from ergonomics.serialization import save_portable, load_portable
+import torch
+# from ergonomics.serialization import save_portable, load_portable
 from uuid import uuid4
 import math
 def is_header(row):
@@ -61,11 +62,8 @@ def process_sequence_initial(data, multiplier):
 
 def prepare_x_y(data):
     beam_width = 1
-    x = data[:-(beam_width+1)]
-    y = []
-    for i in range(1, beam_width+1):
-        y_i = data[i:-(beam_width+1 - i)]
-        y.append(y_i)
+    x = data[:-beam_width]
+    y = data[beam_width:]
     y = np.asarray(y).astype(np.float)
     return x, y
 
@@ -125,17 +123,16 @@ def get_frame(remote_path):
     return csv
 
 
-def save_network_to_algo(network, remote_file_path):
-    network_def_path = "src.modules.net_def"
+def save_network_to_algo(network: torch.jit.ScriptModule, remote_file_path: str):
     local_file_path = "/tmp/{}".format(str(uuid4()))
-    save_portable(network, network_def_path, local_file_path)
+    network.save(local_file_path)
     misc.put_file(local_file_path, remote_file_path)
     return remote_file_path
 
 
 def load_network_from_algo(remote_file_path):
     local_file_path = misc.get_data(remote_file_path)
-    network = load_portable(local_file_path)
+    network = torch.jit.load(local_file_path)
     state = network.get_state()
     return network, state
 

@@ -115,15 +115,17 @@ def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gr
                                                                             outlier_removal_multiplier)
         io_dim = len(norm_boundaries)
         learning_rate = float(base_learning_rate) / io_dim
-        network, state = network_processing.initialize_network(io_dim=io_dim, layer_width=guard.layer_width,
+        network, state = network_processing.initialize_network(io_width=io_dim, hidden_width=guard.layer_width,
                                                                max_history=max_history,
-                                                               initial_lr=learning_rate, lr_multiplier=gradient_multiplier,
+                                                               initial_lr=learning_rate,
+                                                               lr_multiplier=gradient_multiplier,
                                                                io_noise=guard.io_noise,
                                                                perplexity=guard.perplexity,
-                                                               attention_beam_width=guard.attention_beam_width, headers=headers)
-        network.initialize_meta(len(data['x']), norm_boundaries, step_size)
+                                                               attention_beam_width=guard.attention_beam_width,
+                                                               headers=headers,
+                                                               hidden_depth=1)
     error, checkpoint = network_processing.train_autogenerative_model(data_frame=data, network=network,
-                                                                   checkpoint_state=state, iterations=guard.iterations)
+                                                                   state=state, iterations=guard.iterations)
     output['checkpoint_output_path'] = data_proc.save_network_to_algo(checkpoint, guard.checkpoint_output_path)
     output['final_error'] = float(error)
     return output
@@ -149,11 +151,11 @@ def test_train():
     input['mode'] = "train"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t0.csv"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
-    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/apidata_v0.2.5_t0_fast.zip"
+    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/apidata_v1.0.1_t0.zip"
     input['iterations'] = 100
-    input['io_noise'] = 0.04
-    input['hidden_width'] = 100
-    input['perplexity'] = 0.99
+    input['io_noise'] = 0.05
+    input['hidden_width'] = 125
+    input['perplexity'] = 0.65
     input['attention_beam_width'] = 80
     return apply(input)
 
@@ -162,12 +164,12 @@ def test_forecast():
     input = dict()
     input['mode'] = "forecast"
 
-    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/apidata_v0.2.5_t0_fast.zip"
-    input['graph_save_path'] = "data://timeseries/generativeforecasting/my_sinegraph.png"
+    input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/apidata_v1.0.1_t0.zip"
+    input['graph_save_path'] = "data://timeseries/generativeforecasting/my_api_chart.png"
     # input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t1.csv"
-    input['forecast_size'] = 150
-    input['iterations'] = 1
-    input['io_noise'] = 0.04
+    input['forecast_size'] = 500
+    input['iterations'] = 5
+    input['io_noise'] = 0.05
     print(input)
     return apply(input)
 

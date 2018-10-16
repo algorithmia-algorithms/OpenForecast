@@ -8,8 +8,8 @@ from src.modules import misc
 
 def create_graph(envelope, state, forecast_length, noise_percentage):
     graph_file_name = "/tmp/{}.png".format(str(uuid4()))
-    pred_history = state['pred_history'].cpu().data.numpy()
-    true_history = state['true_history'].cpu().data.numpy()
+    pred_history = state['pred_history'].view(-1, state['io_width']).cpu().data.numpy()
+    true_history = state['true_history'].view(-1, state['io_width']).cpu().data.numpy()
     headers = state['headers']
     if true_history.shape[0] <= forecast_length:
         true_past = true_history
@@ -36,7 +36,7 @@ def create_graph(envelope, state, forecast_length, noise_percentage):
         plt.plot(forecast_range, second_up[:, i], c=forecast_color, linestyle=':', label='2 sigma forecast: {}'.format(headers[i]), linewidth=1.5)
         plt.plot(forecast_range, second_low[:,  i], c=forecast_color, linestyle=':', linewidth=1.5)
 
-    plt.title("monte carlo forecast envelope, {}% noise".format(noise_percentage*100))
+    plt.title("monte carlo forecast envelope, {}% halt_noise".format(noise_percentage*100))
     plt.xlabel('t')
     plt.ylabel('y(t)')
     plt.legend(loc=2, fontsize='x-small')
