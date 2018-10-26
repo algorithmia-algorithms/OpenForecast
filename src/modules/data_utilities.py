@@ -1,7 +1,6 @@
 import numpy as np
 from src.modules import misc
 import torch
-# from ergonomics.serialization import save_portable, load_portable
 from uuid import uuid4
 import math
 def is_header(row):
@@ -27,8 +26,6 @@ def process_sequence_incremental(data, state, multiplier):
     if shape[1] != io_width:
         raise misc.AlgorithmError("data dimensions are different from expected, got {}\t expected {}.".format(str(shape[1]), str(io_width)))
     data, _ = normalize_and_remove_outliers(data, io_width, multiplier, norms)
-    x, y = prepare_x_y(data)
-    data = {'x': x, 'y': y}
     return data
 
 # During initial training, we check if a header is present, if so we preserve the headers in the model for variable description.
@@ -36,7 +33,7 @@ def process_sequence_initial(data, multiplier):
     if is_header(data[0]):
         headers = data.pop(0)
     else:
-        headers = np.arange(len(data[0]), dtype=str).tolist()
+        headers = np.arange(len(data[0])).tolist()
     floated = []
     if len(data) >= 5000:
         step_size = int(math.ceil(len(data)/5000))
@@ -55,18 +52,23 @@ def process_sequence_initial(data, multiplier):
     io_dims = npdata.shape[1]
     print(io_dims)
     normalized_data, norm_boundaries = normalize_and_remove_outliers(npdata, io_dims, multiplier)
-    x, y = prepare_x_y(normalized_data)
-    output = {'x': x, 'y': y}
-    return output, norm_boundaries, headers, step_size
+    return normalized_data, norm_boundaries, headers, step_size
 
 
-def prepare_x_y(data):
-    beam_width = 1
-    x = data[:-beam_width]
-    y = data[beam_width:]
-    y = np.asarray(y).astype(np.float)
+def segment_data(data: torch.Tensor, target_lengths: int):
+    dims = data.shape[1]
+    segments = data.split(target_lengths, dim=0)[:-1]
+    num_segments = len(segments)-1
+    x_seg = segments[0:-1]
+    y_seg = segments[1:]
+
+    x = torch.zeros(num_segments, target_lengths, dims, requires_grad=False).float()
+    y = torch.zeros(num_segments, target_lengths, dims, requires_grad=False).float()
+    for i in range(num_segments):
+        x[i] = x_seg[i]
+        y[i] = y_seg[i]
+
     return x, y
-
 
 # We first remove outliers based on the new dataset.
 # However, we normalize based on the original training data.
@@ -135,4 +137,3 @@ def load_network_from_algo(remote_file_path):
     network = torch.jit.load(local_file_path)
     state = network.get_state()
     return network, state
-

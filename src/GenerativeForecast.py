@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from src.modules import data_proc, graph, envelope, misc
+from src.modules import data_utilities, graph, envelope, misc
 from src.modules import network_processing
 
 
@@ -41,8 +41,8 @@ def process_input(input):
             raise misc.AlgorithmError("'checkpoint_output_path' required for 'train' mode")
         if 'hidden_width' in input:
             guard.layer_width = type_check(input, 'hidden_width', int)
-        if 'attention_beam_width' in input:
-            guard.attention_beam_width = type_check(input, 'attention_beam_width', int)
+        if 'linear_width' in input:
+            guard.attention_beam_width = type_check(input, 'linear_width', int)
         if 'perplexity' in input:
             guard.perplexity = type_check(input, 'perplexity', float)
         if 'input_dropout' in input:
@@ -82,11 +82,11 @@ def type_check(dic, id, type):
 
 def forecast(guard, outlier_removal_multiplier):
     output = dict()
-    network, state = data_proc.load_network_from_algo(guard.checkpoint_input_path)
+    network, state = data_utilities.load_network_from_algo(guard.checkpoint_input_path)
     if guard.data_path:
-        guard.data_path = data_proc.get_frame(guard.data_path)
-        guard.data_path = data_proc.process_sequence_incremental(guard.data_path, state,
-                                                                 outlier_removal_multiplier)
+        guard.data_path = data_utilities.get_frame(guard.data_path)
+        guard.data_path = data_utilities.process_sequence_incremental(guard.data_path, state,
+                                                                      outlier_removal_multiplier)
 
     normal_forecast, raw_forecast, state = network_processing.create_forecasts(guard.data_path, network, state,
                                                                                guard.iterations, guard.forecast_size,
@@ -98,7 +98,7 @@ def forecast(guard, outlier_removal_multiplier):
         graph_path = graph.create_graph(graphing_env, state, guard.forecast_size, guard.io_noise)
         output['saved_graph_path'] = graph.save_graph(graph_path, guard.graph_save_path)
     if guard.checkpoint_output_path:
-        output['checkpoint_output_path'] = data_proc.save_network_to_algo(network, guard.checkpoint_output_path)
+        output['checkpoint_output_path'] = data_utilities.save_network_to_algo(network, guard.checkpoint_output_path)
     formatted_envelope = envelope.ready_envelope(output_env, state)
     output['envelope'] = formatted_envelope
     return output
@@ -106,16 +106,16 @@ def forecast(guard, outlier_removal_multiplier):
 
 def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gradient_multiplier):
     output = dict()
-    guard.data_path = data_proc.get_frame(guard.data_path)
+    guard.data_path = data_utilities.get_frame(guard.data_path)
     if guard.checkpoint_input_path:
-        network, state = data_proc.load_network_from_algo(guard.checkpoint_input_path)
-        data = data_proc.process_sequence_incremental(guard.data_path, state, outlier_removal_multiplier)
+        network, state = data_utilities.load_network_from_algo(guard.checkpoint_input_path)
+        data = data_utilities.process_sequence_incremental(guard.data_path, state, outlier_removal_multiplier)
     else:
-        data, norm_boundaries, headers, step_size = data_proc.process_sequence_initial(guard.data_path,
-                                                                            outlier_removal_multiplier)
+        data, norm_boundaries, headers, step_size = data_utilities.process_sequence_initial(guard.data_path,
+                                                                                  outlier_removal_multiplier)
         io_dim = len(norm_boundaries)
         learning_rate = float(base_learning_rate) / io_dim
-        network, state = network_processing.initialize_network(io_width=io_dim, hidden_width=guard.layer_width,
+        network, state = network_processing.initialize_network(io_width=io_dim, width=guard.layer_width,
                                                                max_history=max_history,
                                                                initial_lr=learning_rate,
                                                                lr_multiplier=gradient_multiplier,
@@ -123,10 +123,10 @@ def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gr
                                                                perplexity=guard.perplexity,
                                                                attention_beam_width=guard.attention_beam_width,
                                                                headers=headers,
-                                                               hidden_depth=1)
+                                                               depth=3)
     error, checkpoint = network_processing.train_autogenerative_model(data_frame=data, network=network,
                                                                    state=state, iterations=guard.iterations)
-    output['checkpoint_output_path'] = data_proc.save_network_to_algo(checkpoint, guard.checkpoint_output_path)
+    output['checkpoint_output_path'] = data.save_network_to_algo(checkpoint, guard.checkpoint_output_path)
     output['final_error'] = float(error)
     return output
 
@@ -149,14 +149,14 @@ def apply(input):
 def test_train():
     input = dict()
     input['mode'] = "train"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/apidata_v0.2.5_t0.csv"
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/rossman_5.csv"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
     input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/apidata_v1.0.1_t0.zip"
-    input['iterations'] = 100
+    input['iterations'] = 400
     input['io_noise'] = 0.05
-    input['hidden_width'] = 125
+    input['hidden_width'] = 80
     input['perplexity'] = 0.65
-    input['attention_beam_width'] = 80
+    input['linear_width'] = 80
     return apply(input)
 
 
