@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 # matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from src.modules import misc
+from src.modules import network
 
 
 def test_graph(pred, target):
@@ -78,4 +78,4 @@ def graph_training_data(forecast, forecast_target, historical_forecast, historic
 
 
 def save_graph(graph_path, remote_url):
-    return misc.put_file(graph_path, remote_url)
+    return network.put_file(graph_path, remote_url)

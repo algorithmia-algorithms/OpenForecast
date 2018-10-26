@@ -1,58 +1,16 @@
 import numpy as np
-from src.modules import misc
 import torch
-from uuid import uuid4
-import math
-def is_header(row):
-    try:
-        _ = float(row[0])
-        return False
-    except:
-        return True
 
-
-# For incremental training, we know what the header names are already so lets just pop them if they exist.
-def process_sequence_incremental(data, state, multiplier):
-    if is_header(data[0]):
-        data.pop(0)
-    step_size = state['step_size']
-    objective = []
-    for i in range(0, len(data), step_size):
-        objective.append(data[i])
-    data = np.asarray(objective).astype(np.float)
-    shape = data.shape
-    norms = state['norm_boundaries']
-    io_width = state['io_width']
-    if shape[1] != io_width:
-        raise misc.AlgorithmError("data dimensions are different from expected, got {}\t expected {}.".format(str(shape[1]), str(io_width)))
-    data, _ = normalize_and_remove_outliers(data, io_width, multiplier, norms)
-    return data
 
 # During initial training, we check if a header is present, if so we preserve the headers in the model for variable description.
-def process_sequence_initial(data, multiplier):
-    if is_header(data[0]):
-        headers = data.pop(0)
-    else:
-        headers = np.arange(len(data[0])).tolist()
-    floated = []
-    if len(data) >= 5000:
-        step_size = int(math.ceil(len(data)/5000))
-        objective = []
-        for i in range(0, len(data), step_size):
-            objective.append(data[i])
-    else:
-        step_size = 1
-        objective = data
-    for elm in objective:
-        new_dim = []
-        for dim in elm:
-            new_dim.append(float(dim))
-        floated.append(new_dim)
-    npdata = np.asarray(floated).astype(np.float)
-    io_dims = npdata.shape[1]
-    print(io_dims)
-    normalized_data, norm_boundaries = normalize_and_remove_outliers(npdata, io_dims, multiplier)
-    return normalized_data, norm_boundaries, headers, step_size
+def process_input(data, multiplier):
+    headers = data['headers']
+    feature_columns = data['columns_to_forecast']
+    tensor = data['tensor']
+    tensor = np.asarray(tensor)
+    io_dims = tensor.shape[1]
+    normalized_data, norm_boundaries = normalize_and_remove_outliers(tensor, io_dims, multiplier)
+    return normalized_data, norm_boundaries, headers, feature_columns
 
 
 def segment_data(data: torch.Tensor, target_lengths: int):
@@ -115,25 +73,3 @@ def revert_normalization(data, state):
         output[:, i] = result
     return output
 
-
-def get_frame(remote_path):
-    local_file = misc.get_data(remote_path)
-    with open(local_file) as f:
-        lines = f.read().split('\n')
-        csv = [x.split(',') for x in lines]
-    csv.pop(-1)
-    return csv
-
-
-def save_network_to_algo(network: torch.jit.ScriptModule, remote_file_path: str):
-    local_file_path = "/tmp/{}".format(str(uuid4()))
-    network.save(local_file_path)
-    misc.put_file(local_file_path, remote_file_path)
-    return remote_file_path
-
-
-def load_network_from_algo(remote_file_path):
-    local_file_path = misc.get_data(remote_file_path)
-    network = torch.jit.load(local_file_path)
-    state = network.get_state()
-    return network, state

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from src.modules import data_utilities, graph, envelope, misc
-from src.modules import network_processing
+from src.modules import data_utilities, graph, envelope, network
+from src.modules import torch_utilities
 
 
 class InputGuard:
@@ -10,13 +10,9 @@ class InputGuard:
         self.checkpoint_input_path = None
         self.checkpoint_output_path = None
         self.graph_save_path = None
-        self.iterations = 10
+        self.training_time = 500
         self.forecast_size = 15
-        self.layer_width = 51
-        self.io_noise = 0.04
-        self.perplexity = 55
-        self.attention_beam_width = 45
-        self.input_dropout = 0.45
+        self.model_complexity = 0.5
 
 
 
@@ -27,47 +23,35 @@ def process_input(input):
         if input['mode'] in ['forecast', 'train']:
             guard.mode = input['mode']
         else:
-            raise misc.AlgorithmError("mode is invalid, must be 'forecast', or 'train'")
+            raise network.AlgorithmError("mode is invalid, must be 'forecast', or 'train'")
     if guard.mode == "train":
         if 'data_path' in input:
             guard.data_path = type_check(input, 'data_path', str)
         else:
-            raise misc.AlgorithmError("'data_path' required for 'train' mode")
+            raise network.AlgorithmError("'data_path' required for 'train' mode")
         if 'checkpoint_input_path' in input:
             guard.checkpoint_input_path = type_check(input, 'checkpoint_input_path', str)
         if 'checkpoint_output_path' in input:
             guard.checkpoint_output_path = type_check(input, 'checkpoint_output_path', str)
         else:
-            raise misc.AlgorithmError("'checkpoint_output_path' required for 'train' mode")
-        if 'hidden_width' in input:
-            guard.layer_width = type_check(input, 'hidden_width', int)
-        if 'linear_width' in input:
-            guard.attention_beam_width = type_check(input, 'linear_width', int)
-        if 'perplexity' in input:
-            guard.perplexity = type_check(input, 'perplexity', float)
-        if 'input_dropout' in input:
-            guard.input_dropout = type_check(input, 'input_dropout', float)
-        if 'iterations' in input:
-                guard.iterations = type_check(input, 'iterations', int)
-        if 'io_noise' in input:
-                guard.io_noise = type_check(input, 'io_noise', float)
+            raise network.AlgorithmError("'checkpoint_output_path' required for training")
+        if 'model_complexity' in input:
+            guard.model_complexity = type_check(input, 'model_complexity', int)
+        if 'training_time' in input:
+                guard.training_time = type_check(input, 'training_time', int)
     elif guard.mode == "forecast":
         if 'data_path' in input:
             guard.data_path = type_check(input, 'data_path', str)
         if 'checkpoint_input_path' in input:
             guard.checkpoint_input_path = type_check(input, 'checkpoint_input_path', str)
         else:
-            raise misc.AlgorithmError("'checkpoint_input_path' required for 'forecast' mode.")
+            raise network.AlgorithmError("'checkpoint_input_path' required for 'forecast' mode.")
         if 'checkpoint_output_path' in input:
             guard.checkpoint_output_path = type_check(input, 'checkpoint_output_path', str)
         if 'forecast_size' in input:
             guard.forecast_size = int(input['forecast_size'])
         if 'graph_save_path' in input:
             guard.graph_save_path = type_check(input, 'graph_save_path', str)
-        if 'iterations' in input:
-                guard.iterations = type_check(input, 'iterations', int)
-        if 'io_noise' in input:
-                guard.io_noise = type_check(input, 'io_noise', float)
 
     return guard
 
@@ -77,69 +61,58 @@ def type_check(dic, id, type):
     if isinstance(dic[id], type):
         return dic[id]
     else:
-        raise misc.AlgorithmError("'{}' must be of {}".format(str(id), str(type)))
+        raise network.AlgorithmError("'{}' must be of {}".format(str(id), str(type)))
 
 
 def forecast(guard, outlier_removal_multiplier):
     output = dict()
-    network, state = data_utilities.load_network_from_algo(guard.checkpoint_input_path)
+    model, meta_data, state = network.get_model_package(guard.checkpoint_input_path)
     if guard.data_path:
-        guard.data_path = data_utilities.get_frame(guard.data_path)
-        guard.data_path = data_utilities.process_sequence_incremental(guard.data_path, state,
-                                                                      outlier_removal_multiplier)
+        data = network.get_data(guard.data_path)
+        data, norm_boundaries, headers, feature_columns = data_utilities.process_input(data, outlier_removal_multiplier)
+    forecast_result, state = torch_utilities.create_forecasts(guard.data_path, model, state,
+                                                                            guard.training_time, guard.forecast_size)
 
-    normal_forecast, raw_forecast, state = network_processing.create_forecasts(guard.data_path, network, state,
-                                                                               guard.iterations, guard.forecast_size,
-                                                                               guard.io_noise)
-
-    output_env = envelope.create_envelope(raw_forecast, guard.forecast_size)
-    if guard.graph_save_path:
-        graphing_env = envelope.create_envelope(normal_forecast, guard.forecast_size)
-        graph_path = graph.create_graph(graphing_env, state, guard.forecast_size, guard.io_noise)
-        output['saved_graph_path'] = graph.save_graph(graph_path, guard.graph_save_path)
-    if guard.checkpoint_output_path:
-        output['checkpoint_output_path'] = data_utilities.save_network_to_algo(network, guard.checkpoint_output_path)
-    formatted_envelope = envelope.ready_envelope(output_env, state)
-    output['envelope'] = formatted_envelope
+    # output_env = envelope.create_envelope(raw_forecast, guard.forecast_size)
+    # if guard.graph_save_path:
+    #     graphing_env = envelope.create_envelope(normal_forecast, guard.forecast_size)
+    #     graph_path = graph.create_graph(graphing_env, state, guard.forecast_size, guard.io_noise)
+    #     output['saved_graph_path'] = graph.save_graph(graph_path, guard.graph_save_path)
+    # if guard.checkpoint_output_path:
+    #     output['checkpoint_output_path'] = data_utilities.save_network_to_algo(model, guard.checkpoint_output_path)
+    # formatted_envelope = envelope.ready_envelope(output_env, state)
+    # output['envelope'] = formatted_envelope
     return output
 
 
-def train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gradient_multiplier):
+def train(guard, outlier_removal_multiplier):
     output = dict()
-    guard.data_path = data_utilities.get_frame(guard.data_path)
+    local_data_path = network.get_data(guard.data_path)
+    local_data = network.load_json(local_data_path)
     if guard.checkpoint_input_path:
-        network, state = data_utilities.load_network_from_algo(guard.checkpoint_input_path)
-        data = data_utilities.process_sequence_incremental(guard.data_path, state, outlier_removal_multiplier)
+        model, meta_data, state = network.get_model_package(guard.checkpoint_input_path)
+        data, norm_boundaries, headers, feature_columns = data_utilities.process_input(local_data,
+                                                                                       outlier_removal_multiplier)
     else:
-        data, norm_boundaries, headers, step_size = data_utilities.process_sequence_initial(guard.data_path,
+        data, norm_boundaries, headers, feature_columns = data_utilities.process_input(local_data,
                                                                                   outlier_removal_multiplier)
         io_dim = len(norm_boundaries)
-        learning_rate = float(base_learning_rate) / io_dim
-        network, state = network_processing.initialize_network(io_width=io_dim, width=guard.layer_width,
-                                                               max_history=max_history,
-                                                               initial_lr=learning_rate,
-                                                               lr_multiplier=gradient_multiplier,
-                                                               io_noise=guard.io_noise,
-                                                               perplexity=guard.perplexity,
-                                                               attention_beam_width=guard.attention_beam_width,
-                                                               headers=headers,
-                                                               depth=3)
-    error, checkpoint = network_processing.train_autogenerative_model(data_frame=data, network=network,
-                                                                   state=state, iterations=guard.iterations)
-    output['checkpoint_output_path'] = data.save_network_to_algo(checkpoint, guard.checkpoint_output_path)
+        model, meta_data, state = torch_utilities.init_network(io_width=io_dim, io_noise=0.04, complexity=guard.model_complexity,
+                                                      headers=headers, feature_columns=feature_columns)
+    meta_data['training_time'] = guard.training_time
+    error, checkpoint = torch_utilities.train_autogenerative_model(data_frame=data, network=model,
+                                                                   state=state, meta_data=meta_data)
+    output['checkpoint_output_path'], output['state_output_path'] = data.save_network_to_algo(checkpoint, state, guard.checkpoint_output_path)
     output['final_error'] = float(error)
     return output
 
 def apply(input):
     guard = process_input(input)
     outlier_removal_multiplier = 15
-    max_history = 500
-    base_learning_rate = 0.5
-    gradient_multiplier = 1.0
     if guard.mode == "forecast":
         output = forecast(guard, outlier_removal_multiplier)
     else:
-        output = train(guard, max_history, base_learning_rate, outlier_removal_multiplier, gradient_multiplier)
+        output = train(guard, outlier_removal_multiplier)
 
     return output
 
@@ -149,14 +122,11 @@ def apply(input):
 def test_train():
     input = dict()
     input['mode'] = "train"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/rossman_5.csv"
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/rossman_5_training.json"
     # input['checkpoint_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
-    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/apidata_v1.0.1_t0.zip"
-    input['iterations'] = 400
-    input['io_noise'] = 0.05
-    input['hidden_width'] = 80
-    input['perplexity'] = 0.65
-    input['linear_width'] = 80
+    input['checkpoint_output_path'] = "data://timeseries/generativeforecasting/rossman_5.zip"
+    input['training_time'] = 500
+    input['complexity'] = 0.65
     return apply(input)
 
 
