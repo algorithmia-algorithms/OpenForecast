@@ -6,13 +6,14 @@ import matplotlib.pyplot as plt
 from src.modules import network
 
 
-def test_graph(pred, target):
+def test_graph(target, pred):
     seq_length = target.shape[0]
     x = np.arange(1, seq_length+1)
     plt.plot(x, pred, linestyle='--')
-    plt.plot(x, target, linestyle='-')
+    plt.plot(x, target[:, :], linestyle='-')
     plt.show()
     print("shown")
+    plt.close()
 
 def create_graph(envelope, state, forecast_length, noise_percentage):
     graph_file_name = "/tmp/{}.png".format(str(uuid4()))

@@ -7,26 +7,10 @@ def process_input(data, multiplier):
     headers = data['headers']
     feature_columns = data['columns_to_forecast']
     tensor = data['tensor']
-    tensor = np.asarray(tensor)
+    tensor = np.asarray(tensor, dtype=np.float64)
     io_dims = tensor.shape[1]
     normalized_data, norm_boundaries = normalize_and_remove_outliers(tensor, io_dims, multiplier)
     return normalized_data, norm_boundaries, headers, feature_columns
-
-
-def segment_data(data: torch.Tensor, target_lengths: int):
-    dims = data.shape[1]
-    segments = data.split(target_lengths, dim=0)[:-1]
-    num_segments = len(segments)-1
-    x_seg = segments[0:-1]
-    y_seg = segments[1:]
-
-    x = torch.zeros(num_segments, target_lengths, dims, requires_grad=False).float()
-    y = torch.zeros(num_segments, target_lengths, dims, requires_grad=False).float()
-    for i in range(num_segments):
-        x[i] = x_seg[i]
-        y[i] = y_seg[i]
-
-    return x, y
 
 # We first remove outliers based on the new dataset.
 # However, we normalize based on the original training data.

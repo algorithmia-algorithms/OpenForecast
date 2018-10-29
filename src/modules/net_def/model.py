@@ -39,37 +39,30 @@ class Model(nn.Module):
         self.output = nn.Linear(self.memory_width, self.io_width)
 
     def forecast(self, future_length: int, residual: torch.Tensor, memory: torch.Tensor,
-                 starting_point: torch.Tensor, forecast_tensor: torch.Tensor):
-        x_t = starting_point
-        for i in range(future_length):
-            output, residual, memory = self.process(x_t, residual, memory)
-            forecast_tensor[i] = output
-            x_t = forecast_tensor[i]
+                 forecast_tensor: torch.Tensor):
+        x_t = forecast_tensor[0]
+        for i in range(future_length-1):
+            output, residual, memory = self.forward(x_t, residual, memory)
+            output = output.view(1, -1)
+            forecast_tensor = torch.cat((forecast_tensor, output))
+            x_t = output
         return forecast_tensor
 
 
-    def forward(self, input: torch.Tensor, residual: torch.Tensor, memory: torch.Tensor, input_length: int):
-        for i in range(input_length-1):
-            x_t = input[i]
-            x_t = self.io_noise(x_t)
-            _, residual, memory = self.process(x_t, residual, memory)
-        return residual, memory
-
-
-    def process(self, input: torch.Tensor, residual: torch.Tensor, memory: torch.Tensor):
+    def forward(self, input: torch.Tensor, residual: torch.Tensor, memory: torch.Tensor):
         input = input.view(self.io_width)
+        input = self.io_noise(input)
         processed_input = self.proc(input)
         processed_input = processed_input.view(1, 1, -1)
         rnn_out, memory = self.rnn(processed_input, memory)
         rnn_merged = rnn_out + residual
         residual = self.update_residual(rnn_out, residual)
         output = self.output(rnn_merged)
-        output = output.squeeze()
 
         return output, residual, memory
 
 
     def update_residual(self, output, residual):
-        residual += output
+        residual = residual + output
         residual = torch.sigmoid(residual)
         return residual

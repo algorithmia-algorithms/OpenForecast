@@ -11,7 +11,7 @@ class InputGuard:
         self.checkpoint_output_path = None
         self.graph_save_path = None
         self.training_time = 500
-        self.forecast_size = 15
+        self.forecast_length = 5
         self.model_complexity = 0.5
 
 
@@ -39,6 +39,8 @@ def process_input(input):
             guard.model_complexity = type_check(input, 'model_complexity', int)
         if 'training_time' in input:
                 guard.training_time = type_check(input, 'training_time', int)
+        if 'forecast_length' in input:
+            guard.forecast_length = type_check(input, 'forecast_length', int)
     elif guard.mode == "forecast":
         if 'data_path' in input:
             guard.data_path = type_check(input, 'data_path', str)
@@ -48,7 +50,7 @@ def process_input(input):
             raise network.AlgorithmError("'checkpoint_input_path' required for 'forecast' mode.")
         if 'checkpoint_output_path' in input:
             guard.checkpoint_output_path = type_check(input, 'checkpoint_output_path', str)
-        if 'forecast_size' in input:
+        if 'forecast_length' in input:
             guard.forecast_size = int(input['forecast_size'])
         if 'graph_save_path' in input:
             guard.graph_save_path = type_check(input, 'graph_save_path', str)
@@ -97,8 +99,11 @@ def train(guard, outlier_removal_multiplier):
         data, norm_boundaries, headers, feature_columns = data_utilities.process_input(local_data,
                                                                                   outlier_removal_multiplier)
         io_dim = len(norm_boundaries)
-        model, meta_data, state = torch_utilities.init_network(io_width=io_dim, io_noise=0.04, complexity=guard.model_complexity,
-                                                      headers=headers, feature_columns=feature_columns)
+        headers = headers[0:5]
+        feature_columns = feature_columns[0:5]
+        model, meta_data, state = torch_utilities.init_network(io_width=io_dim, io_noise=0.05, complexity=guard.model_complexity,
+                                                      headers=headers, feature_columns=feature_columns, forecast_length=guard.forecast_length)
+
     meta_data['training_time'] = guard.training_time
     error, checkpoint = torch_utilities.train_autogenerative_model(data_frame=data, network=model,
                                                                    state=state, meta_data=meta_data)
