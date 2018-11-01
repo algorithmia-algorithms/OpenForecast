@@ -138,4 +138,3 @@ if __name__ == "__main__":
   # result = test_forecast()
   result = test_train()
   print(result)
-
