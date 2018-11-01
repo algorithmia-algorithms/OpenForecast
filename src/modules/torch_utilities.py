@@ -1,8 +1,11 @@
 from time import perf_counter
 
 import torch
+import numpy as np
 from torch import nn
 from torch import optim
+from torch.autograd import Variable
+from torch import from_numpy
 from src.modules import forecast_model
 
 
@@ -17,10 +20,11 @@ class UtilitySchema():
         self.training_time = meta_data['training_time']
 
 #
-def generate_forecast(model: forecast_model.ForecastModel, schema: UtilitySchema, data: torch.Tensor):
+def generate_forecast(model: forecast_model.ForecastModel, schema: UtilitySchema, data: np.ndarray):
+    tensor = convert_to_torch_tensor(data)
     init_residual = generate_state(schema.residual_shape)
     init_memory = generate_state(schema.memory_shape)
-    last_step, checkpoint_residual, checkpoint_memory = update(model, init_residual, init_memory, data)
+    last_step, checkpoint_residual, checkpoint_memory = update(model, init_residual, init_memory, tensor)
     raw_forecast = model_forecast(model, checkpoint_residual, checkpoint_memory, last_step, schema)
     filtered_forecast = filter_feature_cols(raw_forecast, schema)
     numpy_forecast = filtered_forecast.detach().numpy()
@@ -28,11 +32,12 @@ def generate_forecast(model: forecast_model.ForecastModel, schema: UtilitySchema
 
 
 #
-def train_model(model: forecast_model.ForecastModel, schema: UtilitySchema, data: torch.Tensor):
+def train_model(model: forecast_model.ForecastModel, schema: UtilitySchema, data: np.ndarray):
+    tensor = convert_to_torch_tensor(data)
     criterion = nn.MSELoss()
     parameters = model.parameters()
     optimizer = optim.Adam(parameters, lr=35e-4)
-    x, y = segment_data(data, schema)
+    x, y = segment_data(tensor, schema)
     start = perf_counter()
     total_time = 0
     while True:
@@ -75,21 +80,22 @@ def update(model: forecast_model.ForecastModel, residual: torch.Tensor, memory: 
 
 
 # At every step, we forecast the next n points.
-def training_step(model, x_t: torch.Tensor, residual_t: torch.Tensor, memory_t: torch.Tensor, schema: UtilitySchema):
+def training_step(model: forecast_model.ForecastModel, x_t: torch.Tensor,
+                  residual_t: torch.Tensor, memory_t: torch.Tensor, schema: UtilitySchema):
 
     output_t, residual_t, memory_t = model.forward(x_t, residual_t, memory_t)
     forecast_t = model_forecast(model, residual_t, memory_t, output_t, schema)
     return forecast_t, residual_t, memory_t
 
 # But when were
-def update_step(model, x_t: torch.Tensor, residual_t: torch.Tensor, memory_t: torch.Tensor):
+def update_step(model: forecast_model.ForecastModel, x_t: torch.Tensor, residual_t: torch.Tensor, memory_t: torch.Tensor):
     output_t, residual_t, memory_t = model.forward(x_t, residual_t, memory_t)
     return output_t, residual_t, memory_t
 
 
 def model_forecast(model: forecast_model.ForecastModel, residual_t, memory_t, h_t, schema: UtilitySchema):
-    residual_forecast = clone_state(residual_t)
-    memory_forecast = clone_state(memory_t)
+    residual_forecast = residual_t.clone()
+    memory_forecast = memory_t.clone()
     forecast_tensor = torch.zeros(schema.forecast_length, schema.data_dimensionality)
     forecast_tensor[0] = h_t
     for i in range(1, schema.forecast_length):
@@ -114,10 +120,9 @@ def filter_feature_cols(tensor: torch.Tensor, schema: UtilitySchema):
         filtered_tensor = tensor
     return filtered_tensor
 
+def convert_to_torch_tensor(data: np.ndarray):
+    return Variable(from_numpy(data), requires_grad=False).float()
 
-def clone_state(tensor):
-    cloned = tensor.clone()
-    return cloned
 
 
 def generate_state(shape: tuple):

@@ -1,31 +1,44 @@
 import numpy as np
-from torch.autograd import Variable
-from torch import from_numpy
 
+from uuid import uuid4
 import matplotlib.pyplot as plt
 from src.modules import network
+from src.GenerativeForecast import InputGuard
+r"""
+This function does a lot of stuff
+- First, it extracts some data from the incoming data object, specifically the 'tensor', 
+  'headers', and 'columns_to_forecast' variables.
+- Second, we populate the 'meta_data' object if it hasn't been initialized already
+- And finally at the same time, we define the model architecture via the model_complexity variable, and define tensor shapes.
+"""
 
-# During initial training, we check if a header is present, if so we preserve the headers in the model for variable description.
-def process_input(data: dict, multiplier: float, complexity: float, io_noise: float, forecast_length: int, training_time: int, meta_data: dict):
+def process_input(data: dict, parameters: InputGuard, meta_data: dict):
     tensor = data['tensor']
     tensor = np.asarray(tensor, dtype=np.float64)
-    meta_data['training_time'] = meta_data.get('training_time', training_time)
+    meta_data['training_time'] = meta_data.get('training_time', parameters.training_time)
     meta_data['headers'] = meta_data.get('headers', data['headers'])
     meta_data['feature_columns'] = meta_data.get('feature_columns', data['columns_to_forecast'])
     meta_data['io_dimension'] = meta_data.get('io_dimension', tensor.shape[1])
     meta_data['norm_boundaries'] = meta_data.get('norm_boundaries', calc_norm_boundaries(tensor, meta_data['io_dimension']))
-    normalized_data = normalize_and_remove_outliers(tensor, multiplier, meta_data)
-    torch_data = convert_to_torch_tensor(normalized_data)
+    normalized_data = normalize_and_remove_outliers(tensor, parameters.outlier_removal_multiplier, meta_data)
 
-    meta_data['architecture'] = define_architecture(complexity, meta_data['feature_columns'], meta_data['io_dimension'], io_noise)
+    meta_data['architecture'] = define_architecture(parameters.model_complexity,
+                                                    meta_data['feature_columns'], meta_data['io_dimension'], parameters.io_noise)
     meta_data['tensor_shape'] = {'memory': (meta_data['architecture']['recurrent']['depth'], 1, meta_data['architecture']['recurrent']['output']),
                                  'residual': (1, 1, meta_data['architecture']['recurrent']['output'])}
-    meta_data['forecast_length'] = forecast_length
-    meta_data['complexity'] = complexity
-    meta_data['io_noise'] = io_noise
-    return torch_data, meta_data
 
-def define_architecture(complexity, feature_columns, io_dimensions, io_noise):
+    meta_data['forecast_length'] = parameters.forecast_length
+    meta_data['complexity'] = parameters.model_complexity
+    meta_data['io_noise'] = parameters.io_noise
+    return normalized_data, meta_data
+
+
+r"""
+By using the complexity parameter (which has a range between 0.0 and 1.0), we're able to figure out how many parameters
+our recurrent neural network architecture should have
+"""
+
+def define_architecture(complexity: float, feature_columns: list, io_dimensions: int, io_noise: float):
     architecture = dict()
     architecture['gaussian_noise'] = {}
     architecture['linear_in'] = {}
@@ -49,10 +62,6 @@ def define_architecture(complexity, feature_columns, io_dimensions, io_noise):
     architecture['recurrent']['depth'] = depth
 
     return architecture
-
-
-def convert_to_torch_tensor(data: np.ndarray):
-    return Variable(from_numpy(data), requires_grad=False).float()
 
 
 # We first remove outliers based on the new dataset.
@@ -86,8 +95,10 @@ def calc_norm_boundaries(data: np.ndarray, dimensions: int):
         norm_boundaries.append({'max': max, 'min': min})
     return norm_boundaries
 
-# used for reverting the normalization process for forecasts. The "norm_boundaries" variables are defined in
-# normalize_and_remove_outliers if no 'norm_boundaries' variable is provided.
+
+# Used for reverting the normalization process for forecasts.
+# The "norm_boundaries" variables are defined in the meta_data object.
+# maps the tensors values back to the original representation
 def revert_normalization(data: np.ndarray, meta_data: dict):
     norm_boundaries = meta_data['norm_boundaries']
     features = meta_data['feature_columns']
@@ -102,6 +113,8 @@ def revert_normalization(data: np.ndarray, meta_data: dict):
     return output
 
 
+# Prepares the raw output from our forecast operation for export to the user.
+# uses the variable Headers to label the dimension appropriately.
 def format_forecast(forecast: np.ndarray, meta_data: dict):
     true_forecast = revert_normalization(forecast, meta_data)
     headers = meta_data['headers']
@@ -111,23 +124,23 @@ def format_forecast(forecast: np.ndarray, meta_data: dict):
     return result
 
 
-
+# Uses matplotlib to create a graph of the forecast tensor, useful for visualizing the results.
 def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
     headers = meta_data['headers']
 
     forecast_length = forecast.shape[0]
     seq_length = x.shape[0]
+    filename = '/tmp/{}.png'.format(str(uuid4()))
     if forecast_length >= seq_length:
         raise network.AlgorithmError("requested forecast length for graphing,"
                                      " beacuse input sequence is {} long".format(str(seq_length)))
     x = np.arange(1, forecast_length*2+1)
     for i in range(len(headers)):
         label = headers[i]
-
-        # plt.plot(x[:forecast_length], x[-forecast_length:, i], linestyle='-', label=label)
         plt.plot(x[-forecast_length:], forecast[:, i], linestyle='--', label=label)
-    plt.savefig('some_graph.png')
+    plt.savefig(filename)
     plt.close()
+    return filename
 
 def save_graph(graph_path, remote_url):
     return network.put_file(graph_path, remote_url)

@@ -15,7 +15,6 @@ class GaussianNoise(nn.Module):
 
 class ForecastModel(torch.jit.ScriptModule):
 
-
     def __init__(self, architecture):
         super(ForecastModel, self).__init__()
 
