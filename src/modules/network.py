@@ -82,6 +82,7 @@ def zip(file_paths: list):
 
 def save_model(model: torch.jit.ScriptModule):
     local_file_path = "/tmp/{}".format(MODEL_FILE_NAME)
+    print(model.graph())
     model.save(local_file_path)
     return local_file_path
 
