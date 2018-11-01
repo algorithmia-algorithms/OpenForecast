@@ -3,7 +3,6 @@ import numpy as np
 from uuid import uuid4
 import matplotlib.pyplot as plt
 from src.modules import network
-from src.OpenForecast import InputGuard
 r"""
 This function does a lot of stuff
 - First, it extracts some data from the incoming data object, specifically the 'tensor', 
@@ -12,7 +11,7 @@ This function does a lot of stuff
 - And finally at the same time, we define the model architecture via the model_complexity variable, and define tensor shapes.
 """
 
-def process_input(data: dict, parameters: InputGuard, meta_data: dict):
+def process_input(data: dict, parameters, meta_data: dict):
     tensor = data['tensor']
     tensor = np.asarray(tensor, dtype=np.float64)
     meta_data['training_time'] = meta_data.get('training_time', parameters.training_time)
