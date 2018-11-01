@@ -3,7 +3,7 @@ import numpy as np
 from uuid import uuid4
 import matplotlib.pyplot as plt
 from src.modules import network
-from src.GenerativeForecast import InputGuard
+from src.OpenForecast import InputGuard
 r"""
 This function does a lot of stuff
 - First, it extracts some data from the incoming data object, specifically the 'tensor', 
