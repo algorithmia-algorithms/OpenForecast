@@ -1,5 +1,5 @@
 algorithmia>=1.0.0,<2.0
 six
 numpy
-http://download.pytorch.org/whl/cpu/torch-0.3.1-cp35-cp35m-linux_x86_64.whl
+https://download.pytorch.org/whl/nightly/cpu/torch_nightly-1.0.0.dev20181029-cp35-cp35m-linux_x86_64.whl
 matplotlib
