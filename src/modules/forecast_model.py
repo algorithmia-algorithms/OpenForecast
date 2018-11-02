@@ -13,10 +13,10 @@ class GaussianNoise(nn.Module):
         return din
 
 
-class ForecastModel(torch.jit.ScriptModule):
+class ForecastNetwork(torch.jit.ScriptModule):
 
     def __init__(self, architecture):
-        super(ForecastModel, self).__init__()
+        super(ForecastNetwork, self).__init__()
 
         linear_in_input = architecture['linear_in']['input']
         linear_in_output = architecture['linear_in']['output']

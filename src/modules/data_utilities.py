@@ -2,33 +2,34 @@ import numpy as np
 
 from uuid import uuid4
 import matplotlib.pyplot as plt
-from src.modules import network
-r"""
-This function does a lot of stuff
-- First, it extracts some data from the incoming data object, specifically the 'tensor', 
-  'headers', and 'columns_to_forecast' variables.
-- Second, we populate the 'meta_data' object if it hasn't been initialized already
-- And finally at the same time, we define the model architecture via the model_complexity variable, and define tensor shapes.
-"""
+from src.modules import utilities
 
-def process_input(data: dict, parameters, meta_data: dict):
+
+def process_input(data: dict, parameters, meta_data: dict = None):
     tensor = data['tensor']
     tensor = np.asarray(tensor, dtype=np.float64)
-    meta_data['training_time'] = meta_data.get('training_time', parameters.training_time)
-    meta_data['headers'] = meta_data.get('headers', data['headers'])
-    meta_data['feature_columns'] = meta_data.get('feature_columns', data['columns_to_forecast'])
-    meta_data['io_dimension'] = meta_data.get('io_dimension', tensor.shape[1])
-    meta_data['norm_boundaries'] = meta_data.get('norm_boundaries', calc_norm_boundaries(tensor, meta_data['io_dimension']))
-    normalized_data = normalize_and_remove_outliers(tensor, parameters.outlier_removal_multiplier, meta_data)
+    if meta_data:
+        meta_data['forecast_length'] = parameters.forecast_length
+    else:
+        meta_data['training_time'] = parameters.training_time
+        meta_data['headers'] = data['headers']
+        meta_data['feature_columns'] = data['columns_to_forecast']
+        meta_data['io_dimension'] = tensor.shape[1]
+        meta_data['norm_boundaries'] = calc_norm_boundaries(tensor, meta_data['io_dimension'])
 
-    meta_data['architecture'] = define_architecture(parameters.model_complexity,
-                                                    meta_data['feature_columns'], meta_data['io_dimension'], parameters.io_noise)
-    meta_data['tensor_shape'] = {'memory': (meta_data['architecture']['recurrent']['depth'], 1, meta_data['architecture']['recurrent']['output']),
-                                 'residual': (1, 1, meta_data['architecture']['recurrent']['output'])}
-
+        new_architecture = define_network_architecture(parameters.model_complexity,
+                                                       len(meta_data['feature_columns']),
+                                                       meta_data['io_dimension'],
+                                                       parameters.io_noise)
+        tensor_shape = {'memory': (meta_data['architecture']['recurrent']['depth'],
+                                   1, meta_data['architecture']['recurrent']['output']),
+                        'residual': (1, 1, meta_data['architecture']['recurrent']['output'])}
+        meta_data['architecture'] = new_architecture
+        meta_data['tensor_shape'] = tensor_shape
+        meta_data['complexity'] = parameters.model_complexity
+        meta_data['io_noise'] = parameters.io_noise
     meta_data['forecast_length'] = parameters.forecast_length
-    meta_data['complexity'] = parameters.model_complexity
-    meta_data['io_noise'] = parameters.io_noise
+    normalized_data = normalize_and_remove_outliers(tensor, parameters.outlier_removal_multiplier, meta_data)
     return normalized_data, meta_data
 
 
@@ -37,7 +38,7 @@ By using the complexity parameter (which has a range between 0.0 and 1.0), we're
 our recurrent neural network architecture should have
 """
 
-def define_architecture(complexity: float, feature_columns: list, io_dimensions: int, io_noise: float):
+def define_network_architecture(complexity: float, y_width: int, io_dimensions: int, io_noise: float):
     architecture = dict()
     architecture['gaussian_noise'] = {}
     architecture['linear_in'] = {}
@@ -46,8 +47,8 @@ def define_architecture(complexity: float, feature_columns: list, io_dimensions:
     architecture['gaussian_noise']['stddev'] = io_noise
     min_depth = 1
     max_depth = 5
-    min_mem_width, min_lin_width = int(10 * len(feature_columns)), int(10 * len(feature_columns))
-    max_mem_width, max_lin_width = int(100 * len(feature_columns)), int(100 * len(feature_columns))
+    min_mem_width, min_lin_width = int(1 * y_width), int(1 * y_width)
+    max_mem_width, max_lin_width = int(10 * y_width), int(10 * y_width)
     depth = int(complexity * (max_depth - min_depth)) + min_depth
     linear_width = int(complexity * (max_lin_width - min_lin_width)) + min_lin_width
     memory_width = int(complexity * (max_mem_width - min_mem_width)) + min_mem_width
@@ -131,7 +132,7 @@ def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
     seq_length = x.shape[0]
     filename = '/tmp/{}.png'.format(str(uuid4()))
     if forecast_length >= seq_length:
-        raise network.AlgorithmError("requested forecast length for graphing,"
+        raise utilities.AlgorithmError("requested forecast length for graphing,"
                                      " beacuse input sequence is {} long".format(str(seq_length)))
     x = np.arange(1, forecast_length*2+1)
     for i in range(len(headers)):
@@ -142,5 +143,5 @@ def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
     return filename
 
 def save_graph(graph_path, remote_url):
-    return network.put_file(graph_path, remote_url)
+    return utilities.put_file(graph_path, remote_url)
 

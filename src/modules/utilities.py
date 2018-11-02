@@ -4,7 +4,7 @@ from requests.exceptions import ConnectionError
 import torch
 import zipfile
 import json
-from src.modules.forecast_model import ForecastModel
+from src.modules.forecast_model import ForecastNetwork
 from uuid import uuid4
 
 client = Algorithmia.client()
@@ -22,8 +22,8 @@ class AlgorithmError(Exception):
 
 
 r"""
-Our model state is preserved in two files:
-- The serialized torch graph representing the model called 'model_architecture.pb'
+Our network state is preserved in two files:
+- The serialized torch graph representing the network called 'model_architecture.pb'
 - A meta data file containing other information such as architecture and information around training, called 'meta_data.json'
 
 """
@@ -35,9 +35,9 @@ def get_model_package(remote_package_path: str):
     meta_data = json.loads(meta_data_file.read().decode('utf-8'))
     return model, meta_data
 
-def save_model_package(model: ForecastModel, meta_data: dict, remote_file_path: str):
+def save_model_package(network: ForecastNetwork, meta_data: dict, remote_file_path: str):
     file_paths = list()
-    file_paths.append(save_model(model))
+    file_paths.append(save_model(network))
     file_paths.append(save_metadata(meta_data))
     local_zip_arch = zip(file_paths)
     output_path = put_file(local_zip_arch, remote_file_path)
@@ -82,7 +82,7 @@ def zip(file_paths: list):
 
 def save_model(model: torch.jit.ScriptModule):
     local_file_path = "/tmp/{}".format(MODEL_FILE_NAME)
-    print(model.graph())
+    print(model.graph)
     model.save(local_file_path)
     return local_file_path
 
