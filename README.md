@@ -36,7 +36,7 @@ And after your model's trained, we output a forecast from the last timestep you 
 
 ##### Example IO
 Input: 
-``` json
+```json
 {  
    "model_output_path":"data://timeseries/generativeforecasting/rossman_5.zip",
    "io_noise":0.04,
@@ -51,7 +51,7 @@ Input:
 
 Output:
 
-``` json
+```json
 {  
    "final_error":0.6678496301174164,
    "model_output_path":"data://timeseries/generativeforecasting/rossman_5.zip",
@@ -132,6 +132,62 @@ Here are some important forecasting variables to keep note of:
 * graph_save_path - If you'd like to have a pretty graph output like above, provide a data API URI here. Graphical output can be very useful for diagnosing and visualizing training issues.
 * data_path - Just like in training, the path to your properly formatted json data.
 
+
+##### Example IO
+Input
+```json
+{  
+   "model_input_path":"data://timeseries/generativeforecasting/rossman_5.zip",
+   "mode":"forecast",
+   "graph_save_path":"data://.algo/temp/forecast.png",
+   "data_path":"data://TimeSeries/GenerativeForecasting/rossman_5_training.json"
+}
+```
+
+Output
+```json
+{  
+   "forecast":{  
+      "sales for store #1":[  
+         4073.076904296875,
+         3906.852294921875,
+         3710.570068359375,
+         3535.864990234375,
+         3401.650146484375
+      ],
+      "sales for store #2":[  
+         5120.1875,
+         4880.99267578125,
+         4667.58984375,
+         4515.4482421875,
+         4432.43701171875
+      ],
+      "sales for store #3":[  
+         7047.14306640625,
+         6958.7578125,
+         6936.13720703125,
+         6960.18408203125,
+         7014.0869140625
+      ],
+      "sales for store #4":[  
+         3804.46875,
+         3592.14013671875,
+         3390.19873046875,
+         3216.244873046875,
+         3083.56494140625
+      ],
+      "sales for store #5":[  
+         3803.215576171875,
+         3677.75830078125,
+         3570.28466796875,
+         3482.46630859375,
+         3416.725830078125
+      ]
+   },
+   "graph_save_path":"data://.algo/temp/forecast.png"
+}
+
+```
 
 ## IO Schema
 

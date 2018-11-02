@@ -11,7 +11,7 @@ class Parameters:
         self.model_output_path = None
         self.graph_save_path = None
         self.training_time = 500
-        self.forecast_length = 5
+        self.forecast_length = 10
         self.model_complexity = 0.5
         self.io_noise = 0.05
         self.outlier_removal_multiplier = 15
@@ -23,8 +23,7 @@ def process_input(input):
 
     if 'outlier_removal_multiplier' in input:
         parameters.outlier_removal_multiplier = type_check(input, 'outlier_removal_multiplier', float)
-    if 'forecast_length' in input:
-        parameters.forecast_length = type_check(input, 'forecast_length', int)
+
     if 'data_path' in input:
         parameters.data_path = type_check(input, 'data_path', str)
     else:
@@ -40,6 +39,8 @@ def process_input(input):
             parameters.model_complexity = type_check(input, 'model_complexity', float)
         if 'training_time' in input:
                 parameters.training_time = type_check(input, 'training_time', int)
+        if 'forecast_length' in input:
+            parameters.forecast_length = type_check(input, 'forecast_length', int)
         if 'model_output_path' in input:
             parameters.model_output_path = type_check(input, 'model_output_path', str)
         else:

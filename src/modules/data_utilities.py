@@ -32,7 +32,7 @@ def process_input(data: dict, parameters, meta_data: dict = None):
         meta_data['tensor_shape'] = tensor_shape
         meta_data['complexity'] = parameters.model_complexity
         meta_data['io_noise'] = parameters.io_noise
-    meta_data['forecast_length'] = parameters.forecast_length
+        meta_data['forecast_length'] = parameters.forecast_length
     normalized_data = normalize_and_remove_outliers(tensor, parameters.outlier_removal_multiplier, meta_data)
     return normalized_data, meta_data
 
