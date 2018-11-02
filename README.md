@@ -3,7 +3,7 @@ OpenForecast is an open source **multivariate**, **portable** and **customizable
 ## Introduction
 What does all that mean? lets break it down.
 * Multivatiate - This means that the algorithm can be trained to forecast *multiple independent variables at once*. This can be very useful for forecasting real world events like [earthquake forecasting][ef], along with more economically rewarding activities like [economic asset price prediction][econPred].
-* Portable - We use [pytorch] 1.0 here, this means we're able to package our recurrent model into a JIT compiled graph, which can be serialized and run almost anywhere!
+* Portable - We use [pytorch][pytorch] 1.0 here, this means we're able to package our recurrent model into a JIT compiled graph, which can be serialized and run almost anywhere!
 * Auto-regressive - Forecasting the future can be tricky, particularly when you aren't sure how far into the future you wish to look.  This algorithm uses it's previously predicted data points to help understand what the future looks like. For more information check out [this post][autoreg].
 
 Lets get started in figuring out how this all works.
@@ -261,5 +261,6 @@ With input_dropout we can get pretty close to a real accuracy measurement, but f
 [ef]: https://en.wikipedia.org/wiki/Earthquake_prediction
 [econPred]: https://en.wikipedia.org/wiki/Stock_market_prediction
 [autoreg]: https://dzone.com/articles/vector-autoregression-overview-and-proposals
-[algo_link]: https://algorithmia.com/algorithms/TimeSeries/OpenForecast
+[algolink]: https://algorithmia.com/algorithms/TimeSeries/OpenForecast
 [rossman_example]: https://github.com/algorithmiaio/OpenForecast/tree/master/tools/rossman
+[pytorch]: https://pytorch.org/get-started/locally/

@@ -13,6 +13,7 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     if meta_data:
         meta_data['forecast_length'] = parameters.forecast_length
     else:
+        meta_data = dict()
         meta_data['training_time'] = parameters.training_time
         meta_data['headers'] = data['headers']
         meta_data['feature_columns'] = data['columns_to_forecast']
