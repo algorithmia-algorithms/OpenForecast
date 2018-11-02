@@ -24,9 +24,9 @@ def process_input(data: dict, parameters, meta_data: dict = None):
                                                        len(meta_data['feature_columns']),
                                                        meta_data['io_dimension'],
                                                        parameters.io_noise)
-        tensor_shape = {'memory': (meta_data['architecture']['recurrent']['depth'],
-                                   1, meta_data['architecture']['recurrent']['output']),
-                        'residual': (1, 1, meta_data['architecture']['recurrent']['output'])}
+        tensor_shape = {'memory': (new_architecture['recurrent']['depth'],
+                                   1, new_architecture['recurrent']['output']),
+                        'residual': (1, 1, new_architecture['recurrent']['output'])}
         meta_data['architecture'] = new_architecture
         meta_data['tensor_shape'] = tensor_shape
         meta_data['complexity'] = parameters.model_complexity
