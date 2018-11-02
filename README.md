@@ -1,5 +1,8 @@
 OpenForecast is an open source **multivariate**, **portable** and **customizable** forecasting algorithm, you can see it in action [here][algolink].
 
+<img src="https://i.imgur.com/BjGV1OX.png"></img>
+
+
 ## Introduction
 What does all that mean? lets break it down.
 * Multivatiate - This means that the algorithm can be trained to forecast *multiple independent variables at once*. This can be very useful for forecasting real world events like [earthquake forecasting][ef], along with more economically rewarding activities like [economic asset price prediction][econPred].
