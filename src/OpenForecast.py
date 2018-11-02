@@ -3,7 +3,7 @@ from src.modules import data_utilities, utilities
 from src.modules import network_manager
 
 
-class InputGuard:
+class Parameters:
     def __init__(self):
         self.mode = None
         self.data_path = None
@@ -19,40 +19,40 @@ class InputGuard:
 
 
 def process_input(input):
-    guard = InputGuard()
+    parameters = Parameters()
 
     if 'outlier_removal_multiplier' in input:
-        guard.outlier_removal_multiplier = type_check(input, 'outlier_removal_multiplier', float)
+        parameters.outlier_removal_multiplier = type_check(input, 'outlier_removal_multiplier', float)
     if 'forecast_length' in input:
-        guard.forecast_length = type_check(input, 'forecast_length', int)
+        parameters.forecast_length = type_check(input, 'forecast_length', int)
     if 'data_path' in input:
-        guard.data_path = type_check(input, 'data_path', str)
+        parameters.data_path = type_check(input, 'data_path', str)
     else:
         raise utilities.AlgorithmError("'data_path' required")
 
     if 'mode' in input:
         if input['mode'] in ['forecast', 'train']:
-            guard.mode = input['mode']
+            parameters.mode = input['mode']
         else:
             raise utilities.AlgorithmError("mode is invalid, must be 'forecast', or 'train'")
-    if guard.mode == "train":
+    if parameters.mode == "train":
         if 'model_complexity' in input:
-            guard.model_complexity = type_check(input, 'model_complexity', float)
+            parameters.model_complexity = type_check(input, 'model_complexity', float)
         if 'training_time' in input:
-                guard.training_time = type_check(input, 'training_time', int)
+                parameters.training_time = type_check(input, 'training_time', int)
         if 'model_output_path' in input:
-            guard.model_output_path = type_check(input, 'model_output_path', str)
+            parameters.model_output_path = type_check(input, 'model_output_path', str)
         else:
             raise utilities.AlgorithmError("'model_output_path' required for training")
-    elif guard.mode == "forecast":
+    elif parameters.mode == "forecast":
         if 'graph_save_path' in input:
-            guard.graph_save_path = type_check(input, 'graph_save_path', str)
+            parameters.graph_save_path = type_check(input, 'graph_save_path', str)
         if 'model_input_path' in input:
-            guard.model_input_path = type_check(input, 'model_input_path', str)
+            parameters.model_input_path = type_check(input, 'model_input_path', str)
         else:
             raise utilities.AlgorithmError("'model_input_path' required for 'forecast' mode.")
 
-    return guard
+    return parameters
 
 
 
@@ -65,7 +65,7 @@ def type_check(dic, id, type):
 
 
 
-def forecast(input: InputGuard):
+def forecast(input: Parameters):
     output = dict()
     network, meta_data = utilities.get_model_package(input.model_input_path)
     data_path = utilities.get_data(input.data_path)
