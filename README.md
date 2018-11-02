@@ -149,46 +149,72 @@ Output
 {  
    "forecast":{  
       "sales for store #1":[  
-         4073.076904296875,
-         3906.852294921875,
-         3710.570068359375,
-         3535.864990234375,
-         3401.650146484375
+         4101.65673828125,
+         3914.804443359375,
+         3699.373046875,
+         3510.88134765625,
+         3364.36474609375,
+         3270.650634765625,
+         3234.611083984375,
+         3241.791015625,
+         3284.655029296875,
+         3359.50634765625
       ],
       "sales for store #2":[  
-         5120.1875,
-         4880.99267578125,
-         4667.58984375,
-         4515.4482421875,
-         4432.43701171875
+         5133.41455078125,
+         4877.1953125,
+         4657.724609375,
+         4499.88720703125,
+         4411.26953125,
+         4380.919921875,
+         4403.0673828125,
+         4469.1572265625,
+         4573.89892578125,
+         4711.55859375
       ],
       "sales for store #3":[  
-         7047.14306640625,
-         6958.7578125,
-         6936.13720703125,
-         6960.18408203125,
-         7014.0869140625
+         7054.7734375,
+         6959.3623046875,
+         6936.23046875,
+         6952.66357421875,
+         6997.67626953125,
+         7065.8779296875,
+         7158.51220703125,
+         7265.13525390625,
+         7387.09619140625,
+         7526.7685546875
       ],
       "sales for store #4":[  
-         3804.46875,
-         3592.14013671875,
-         3390.19873046875,
-         3216.244873046875,
-         3083.56494140625
+         3830.94482421875,
+         3611.1767578125,
+         3397.71826171875,
+         3212.484130859375,
+         3070.39306640625,
+         2975.947998046875,
+         2930.5908203125,
+         2934.201416015625,
+         2981.682861328125,
+         3063.127685546875
       ],
       "sales for store #5":[  
-         3803.215576171875,
-         3677.75830078125,
-         3570.28466796875,
-         3482.46630859375,
-         3416.725830078125
+         3808.80859375,
+         3681.504150390625,
+         3570.080810546875,
+         3476.306640625,
+         3400.790771484375,
+         3351.430908203125,
+         3336.517333984375,
+         3356.90380859375,
+         3405.80029296875,
+         3479.103271484375
       ]
    },
    "graph_save_path":"data://.algo/temp/forecast.png"
 }
-
 ```
 
+Did you notice the difference in results from the `train` step? That's because we didn't change the `io_noise` variable, 
+if we set it to `0.0`, every subsequent forecast would be identical, given the same input.
 ## IO Schema
 
 <a id="commonTable"></a>
@@ -210,154 +236,106 @@ Output
 
 | Parameter | Type | Description | Default if applicable |
 | --------- | ----------- | ----------- | ----------- |
-| iterations | Integer | The number of independent forecast operations used to create your monte carlo envelope | `10` |
+| data_path | String | The path to your formatted data you wish to build a model on, must be stored on the `algorithmia data API`. | N/A |
+| model_input_path | String | The data API path to the trained model you've previously built. |N/A|
 | graph_save_path | String | The output path for your Monte Carlo forecast graph. | N/A |
 
 #### Output
 
 | Parameter | Type | Description |
 | --------- | ----------- | ----------- |
-| checkpoint_output_path | String | This is the path you provided as `checkpoint_output_path`, useful as a reminder |
-| envelope | List[Envelope] | A list of Envelope objects for each dimension of your data, see below for more info. |
+| graph_save_apth | String | If you set a graph_save_path, then we successfully saved a graph at this data API location |
+| forecast | Forecast | A forecast object containing information |
 
-<a id="envelopeTable"></a>
-#### Envelope Object
-Each independent variable has it's own Envelope object, with the variable name defined by `variable`.
-
-| Parameter | Type | Description | 
-| --------- | --------- | --------- |
-| variable | String | The name of the variable for this dimension, defined during initial training from your csv header. |
-| mean | List[Float] | The mean for each point in your forecast, for this variable |
-| standard_deviation | List[Float] | The Standard deviation for each point in your forecast, for this variable. |
-| first_deviation | Deviation | The upper and lower bounds for the first standard deviation from the mean, for this variable. |
-| second_deviation | Deviation | The upper and lower bounds for the second standard deviation from the mean, for this variable. |
-
-
-#### Deviation Object
-| Parameter | Type | Description | 
-| --------- | --------- | --------- |
-| upper_bound | List[Float] | The upper bound values for this deviation. |
-| lower_bound | List[Float] | The lower bound values for this deviation. |
- 
- 
-##### Example
-
-``` json
-{  
-   "envelope":[  
-      {  
-         "second_deviation":{  
-            "upper_bound":[  
-               -0.9742458981517674,
-               -0.9500016416591704,
-               -0.9139700686053683,
-               -0.8639122314814361,
-               -0.8069765949845458,
-               -0.7560190278939466,
-               -0.6934241707923614,
-               -0.6294399237192251,
-               -0.5676434989916705,
-               -0.5101172068230402
-            ],
-            "lower_bound":[  
-               -1.0399963026996728,
-               -0.9996776853519379,
-               -0.951504861204202,
-               -0.9103988246556488,
-               -0.8559860467314577,
-               -0.7970966499396105,
-               -0.7433021895286835,
-               -0.685673487230482,
-               -0.6241579154980756,
-               -0.5546375129111518
-            ]
-         },
-         "mean":[  
-            -1.0071211004257201,
-            -0.9748396635055542,
-            -0.9327374649047852,
-            -0.8871555280685425,
-            -0.8314813208580017,
-            -0.7765578389167785,
-            -0.7183631801605225,
-            -0.6575567054748536,
-            -0.5959007072448731,
-            -0.532377359867096
-         ],
-         "standard_deviation":[  
-            0.016437601136976357,
-            0.012419010923191857,
-            0.00938369814970841,
-            0.011621648293553192,
-            0.012252362936727983,
-            0.010269405511416,
-            0.012469504684080545,
-            0.014058390877814235,
-            0.014128604126601265,
-            0.011130076522027917
-         ],
-         "variable":"0",
-         "first_deviation":{  
-            "upper_bound":[  
-               -0.9906834992887438,
-               -0.9624206525823623,
-               -0.9233537667550767,
-               -0.8755338797749893,
-               -0.8192289579212738,
-               -0.7662884334053626,
-               -0.7058936754764419,
-               -0.6434983145970393,
-               -0.5817721031182719,
-               -0.5212472833450681
-            ],
-            "lower_bound":[  
-               -1.0235587015626966,
-               -0.987258674428746,
-               -0.9421211630544936,
-               -0.8987771763620956,
-               -0.8437336837947297,
-               -0.7868272444281945,
-               -0.7308326848446031,
-               -0.6716150963526678,
-               -0.6100293113714743,
-               -0.5435074363891239
-            ]
-         }
-      }
-   ],
-   "saved_graph_path":"data://timeseries/generativeforecasting/sinewave_forecast.png"
-}
-
-```
-
-<a id="trainingTable"></a>
-         
 ### Training Table
 
 #### Input
 
 | Parameter | Type | Description | Default if applicable |
 | --------- | ----------- | ----------- | ----------- |
-| iterations | Integer | Defines the number of iterations per epoch for training your model. Bigger numbers makes training take longer, but can yield better results. | `10` |
-| layer_width | Integer | Defines your models layer width, layer depth is automatically determined by the number of independent variables in your dataset. | `51` |
-| attention_width | Integer | Defines your networks hard attention beam width. Larger beams are useful for complex data models.| `25` |
-| future_beam_width | Integer | Similar to the `attention_width` but this defines how many steps we predict in one training step.| `10` |
-| input_dropout | Float | This defines the percentage of input that we "drop out" during training. | `0.45` |
-| io_noise | Float | Defines the percentage of Gaussian noise added to the training data to perturb the results. Both noise and input_dropout help the model generalize to future trends. | `0.04` |
+| training_time | Integer | Defines the number of seconds to continue training for, values above `450` require you to change the default algorithm timeout. | `500` |
+| model_complexity | Float | A value between 0 and 1, defines how complex, or number of parameters to fit into the model. | `0.5` |
+| data_path | String | The path to your formatted data you wish to build a model on, must be stored on the `data API`. | N/A |
+| model_output_path | String | The output data API path where we plan to store the trained model, must be defined | N/A |
+| forecast_length| Int | The number of steps into the future we want our model to be able to predict, used in `train`ing and `forecast`ing. | `10` |
+| io_noise | Float | Defines the percentage of Gaussian noise added to the training data to perturb the results, adding noise helps the model generalize to future trends. | `0.04` |
 
 #### Output
 
 | Parameter | Type |  Description |
 | --------- | --------- | ----------- |
-| checkpoint_output_path  | String | This is the path you provided as `checkpoint_output_path`, useful as a reminder |
-| final error | Float | The best generated model's error, the lower the better.
+| model_output_path  | String | This is the path you provided as `model_output_path`, useful as a reminder |
+| final_error | Float | The best generated model's error, the lower the better, ideally values below `0.01` is suggests a pretty good understanding of the sequence.
+| forecast| Forecast | A forecast object containing information |
 
 #### Example
 
 ``` json
 {  
    "final_error":0.029636630788445473,
-   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_model.t7"
+   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_model.zip",
+   "forecast":{  
+      "sales for store #1":[  
+         4101.65673828125,
+         3914.804443359375,
+         3699.373046875,
+         3510.88134765625,
+         3364.36474609375,
+         3270.650634765625,
+         3234.611083984375,
+         3241.791015625,
+         3284.655029296875,
+         3359.50634765625
+      ],
+      "sales for store #2":[  
+         5133.41455078125,
+         4877.1953125,
+         4657.724609375,
+         4499.88720703125,
+         4411.26953125,
+         4380.919921875,
+         4403.0673828125,
+         4469.1572265625,
+         4573.89892578125,
+         4711.55859375
+      ],
+      "sales for store #3":[  
+         7054.7734375,
+         6959.3623046875,
+         6936.23046875,
+         6952.66357421875,
+         6997.67626953125,
+         7065.8779296875,
+         7158.51220703125,
+         7265.13525390625,
+         7387.09619140625,
+         7526.7685546875
+      ],
+      "sales for store #4":[  
+         3830.94482421875,
+         3611.1767578125,
+         3397.71826171875,
+         3212.484130859375,
+         3070.39306640625,
+         2975.947998046875,
+         2930.5908203125,
+         2934.201416015625,
+         2981.682861328125,
+         3063.127685546875
+      ],
+      "sales for store #5":[  
+         3808.80859375,
+         3681.504150390625,
+         3570.080810546875,
+         3476.306640625,
+         3400.790771484375,
+         3351.430908203125,
+         3336.517333984375,
+         3356.90380859375,
+         3405.80029296875,
+         3479.103271484375
+      ]
+   }
 }
 ```
 
