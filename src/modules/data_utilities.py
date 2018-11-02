@@ -1,6 +1,7 @@
 import numpy as np
-
 from uuid import uuid4
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from src.modules import utilities
 

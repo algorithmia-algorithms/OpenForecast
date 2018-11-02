@@ -30,7 +30,7 @@ the model isn't able to predict far enough in the future for your use case, defa
 That is all we need to define our model.
 Here are the remaining training settings that need to be defined, they mostly pertain to the training process itself and can be adjusted in future training steps:
 * `io_noise` - We add gaussian noise to the input sequence during training, and can be kept during forecasting as well. We do this to prevent overfitting, and to force the model to learn large scale trends rather than micro-fluctuations. For most tasks `0.04` or `4%` noise is sufficient.
-* `checkpoint_output_path` - the all important output path! We recommend a checkpoint name that contains version information and dataset information so you don't accidentally overwrite or misplace an important checkpoint in the future.
+* `model_output_path` - the all important output path! We recommend a checkpoint name that contains version information and dataset information so you don't accidentally overwrite or misplace an important checkpoint in the future.
 
 And after your model's trained, we output a forecast from the last timestep you provided!
 
@@ -38,12 +38,12 @@ And after your model's trained, we output a forecast from the last timestep you 
 Input: 
 ``` json
 {  
- "model_input_path":"data://timeseries/generativeforecasting/rossman_5.zip",
+   "model_output_path":"data://timeseries/generativeforecasting/rossman_5.zip",
    "io_noise":0.04,
    "data_path":"data://TimeSeries/GenerativeForecasting/rossman_5.json",
    "model_complexity": 0.65,
    "forecast_length": 10,
-   "training_time": 500
+   "training_time": 30
    "mode":"train",
    "future_beam_width":25
 }
@@ -53,16 +53,75 @@ Output:
 
 ``` json
 {  
-   "final_error":0.03891853988170624,
-   "model_save_path":"data://timeseries/generativeforecasting/rossman_5.zip"
+   "final_error":0.6678496301174164,
+   "model_output_path":"data://timeseries/generativeforecasting/rossman_5.zip",
+   "forecast":{  
+      "sales for store #1":[  
+         4131.84521484375,
+         3950.352294921875,
+         3744.051513671875,
+         3555.768310546875,
+         3409.609130859375,
+         3318.1181640625,
+         3287.380615234375,
+         3305.02294921875,
+         3359.5107421875,
+         3445.07177734375
+      ],
+      "sales for store #2":[  
+         5156.89306640625,
+         4906.033203125,
+         4684.193359375,
+         4521.06005859375,
+         4427.05126953125,
+         4401.578125,
+         4432.380859375,
+         4507.53564453125,
+         4622.65869140625,
+         4766.45166015625
+      ],
+      "sales for store #3":[  
+         7083.1044921875,
+         6988.40283203125,
+         6953.248046875,
+         6966.27001953125,
+         7018.67041015625,
+         7098.595703125,
+         7200.03662109375,
+         7312.38720703125,
+         7442.1142578125,
+         7582.84130859375
+      ],
+      "sales for store #4":[  
+         3845.955322265625,
+         3630.4013671875,
+         3418.158203125,
+         3228.0283203125,
+         3082.046630859375,
+         2990.082275390625,
+         2950.688232421875,
+         2963.6240234375,
+         3023.15771484375,
+         3117.81494140625
+      ],
+      "sales for store #5":[  
+         3826.99365234375,
+         3701.860595703125,
+         3587.1298828125,
+         3486.552734375,
+         3407.12158203125,
+         3360.6328125,
+         3355.103759765625,
+         3387.739990234375,
+         3451.078369140625,
+         3536.541015625
+      ]
+   }
 }
 ```
 
-For our initial training we specify all network definition parameters, along with a checkpoint output path, and a data path.
-Keep note of that saved filepath, we're going to need that later.
-
 ### Forecasting
-So you've trained a model and now you want to start exploring your data, lets take a look at how to make forecasts.
+So you've trained a model, gotten a basic forecast and now you want to start exploring your data in more depth with more forecasts.
 
 The trained model has no knowledge of the data it's already seen, and doesn't store weights / residual vectors to keep things simple.
 This is great, but it means you need to hold on to the data you used to train, or just append to it with new data as it comes in.
