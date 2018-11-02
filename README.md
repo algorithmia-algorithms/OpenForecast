@@ -1,11 +1,9 @@
-![sine wave splash](https://i.imgur.com/hhB6fCb.png)
-
-GenerativeForecast is a **multivariate**, **incrementally trainable** auto-regressive forecasting algorithm.
+OpenForecast is an open source **multivariate**, **portable** and **customizable** forecasting algorithm, you can see it in action [here][algolink].
 
 ## Introduction
 What does all that mean? lets break it down.
 * Multivatiate - This means that the algorithm can be trained to forecast *multiple independent variables at once*. This can be very useful for forecasting real world events like [earthquake forecasting][ef], along with more economically rewarding activities like [economic asset price prediction][econPred].
-* Incrementally trainable - This algorithm can be incrementally trained with new data without needing to start from scratch. It's quite possible to automatically update your model or models on a daily/hourly/minute basis with new data that you can then use to quickly forecast the next N steps. It should also be mentioned that you don't _have_ to update your model before making a forecast! That's right, *you can pass new data into the 'forecast' method and it will update the model state without running a backpropegation operation.*
+* Portable - We use [pytorch] 1.0 here, this means we're able to package our recurrent model into a JIT compiled graph, which can be serialized and run almost anywhere!
 * Auto-regressive - Forecasting the future can be tricky, particularly when you aren't sure how far into the future you wish to look.  This algorithm uses it's previously predicted data points to help understand what the future looks like. For more information check out [this post][autoreg].
 
 Lets get started in figuring out how this all works.
@@ -14,52 +12,38 @@ Lets get started in figuring out how this all works.
 This algorithm has two main `modes`, **forecast** and **train**. To create a forecast you need to create a checkpoint model, which you can make by running a _train_ operation over your input data.
 The pipelines you create can be somewhat complex here so we're going to go over everything as much as we can.
 
-If at any time you are unsure as to what a particular variable does, be sure to take a look at the IO Schema at the bottom of this description.
-
 ### Training
 First lets look at the **train** mode and how to get setup.
-<a id="initialTraining"></a>
-#### First time training
-When training a model on your data for the first time, there are some important things to consider.
-* First and foremost, the data _must_ be a file in csv format.
-* In this csv file each column denotes an independent variable, and each row denotes a data point.
-* Your data should be continuous, step wise operators make training more difficult.
-* If you'd like your variables to be described in forecasts, be sure to start your training data csv with headers that define your input.
+When training a model on your data, there are some important things to consider.
+* First and foremost, the data should be processed into a compatible json format, check [here][rossman_example] for an example.
+* Your data ideally is fully continuous, step wise operators make training more difficult. But as you can see in the above example, not necessary.
 * **Each point in your dataset must be in temporal order.**
-
-Let's take a quick look with an example of a sine curve:
-
-[initial training data for sine curve dataset][initsined]
-
-Simple right? Lets also explore another dataset with two independent variables (this one is based on bitcoin price and transaction volume):
-
-[initial training data for bitcoin dataset][initbitd]
-
-Notice the headers? **You only have to define headers when training a brand new model, the network file itself will store your headers to keep things simple.** Don't worry if all your csv data has headers, our algorithm is smart enough to figure that out! What if you don't have headers? No problem, the algorithm has default variable names to use if they're missing.
 
 
 Some important parameters initial training parameters to consider:
-* `layer_width` - Defines how much knowledge your model is able to grasp. It's tough to overfit with our data augmentation strategies so using a larger number here for challenging datasets can certainly help.
-* `attention_width` -  Large attention vectors can help improve your models recall of events, but potentially at the expense of learning how to manage that internally in LSTM layers. *In the initial release this is a hard attention vector pointed to the last N steps, where N is the width of the vector, this may change in the future.*
-* `future_beam_width` - This provides us a tool to force the model to predict future events besides just the first step. We use a custom loss function to take large beams into consideration.
+* `model_complexity` - Defines how much knowledge your model is able to grasp. 
+It's tough to overfit with our data augmentation strategies so using a larger number here for challenging datasets can certainly help, but it will take longer to train.
+* `training_time` -   Defines how long in seconds we should spend training a model. The default is `450` as the default algorithm timeout is 500 seconds. Higher numbers can yield better results.
+* `forecast_length` - In the training case, defines how far in the future the model should be able to predict for any given timestep. Larger lengths might be unstable and not train successfully, but smaller lengths might mean
+the model isn't able to predict far enough in the future for your use case, defaults to `10`.
 
 That is all we need to define our model.
-Here are the remaining training settings that need to be defined, they mostly pretain to the training process itself and can be adjusted in future training steps:
-* `input_dropout` - How can we make sure that our training process is kept on task? We do this by forcing the model to stoichastically feed it it's own predictions as input! This keeps the training model focused on auto-regressive forcasting, and along with `io_noise` prevents overfitting.
-* `io_noise` - We add gaussian noise to the input and output for our network during training, and can be kept during forecasting as well. We do this to prevent overfitting, and to force the model to learn large scale trends rather than micro-fluctuations. For most tasks `0.04` or `4%` noise is sufficient.
+Here are the remaining training settings that need to be defined, they mostly pertain to the training process itself and can be adjusted in future training steps:
+* `io_noise` - We add gaussian noise to the input sequence during training, and can be kept during forecasting as well. We do this to prevent overfitting, and to force the model to learn large scale trends rather than micro-fluctuations. For most tasks `0.04` or `4%` noise is sufficient.
 * `checkpoint_output_path` - the all important output path! We recommend a checkpoint name that contains version information and dataset information so you don't accidentally overwrite or misplace an important checkpoint in the future.
+
+And after your model's trained, we output a forecast from the last timestep you provided!
 
 ##### Example IO
 Input: 
 ``` json
 {  
- "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
-   "layer_width":55,
-   "iterations":2,
+ "model_input_path":"data://timeseries/generativeforecasting/rossman_5.zip",
    "io_noise":0.04,
-   "data_path":"data://TimeSeries/GenerativeForecasting/sinewave_v1.0_t0.csv",
-   "attention_beam_width":55,
-   "input_dropout":0.4,
+   "data_path":"data://TimeSeries/GenerativeForecasting/rossman_5.json",
+   "model_complexity": 0.65,
+   "forecast_length": 10,
+   "training_time": 500
    "mode":"train",
    "future_beam_width":25
 }
@@ -70,300 +54,25 @@ Output:
 ``` json
 {  
    "final_error":0.03891853988170624,
-   "model_save_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7"
+   "model_save_path":"data://timeseries/generativeforecasting/rossman_5.zip"
 }
 ```
 
 For our initial training we specify all network definition parameters, along with a checkpoint output path, and a data path.
 Keep note of that saved filepath, we're going to need that later.
 
-<a id="incrTraining"></a>
-#### Incremental Training
-
-So you have a model that you've already trained already, and it's been giving you great forecasts. But you've noticed new trends evolving in your timeseries that your model isn't able to predict. Wouldn't it be great if there was a way to incrementally update your model? There is! :smile: 
-
-When you already have a trained model, you can incrementally retrain it by simply providing that model URI with the `checkpoint_input_path` key in your input, that's it! All network definition parameters are preserved so there's no need to write them all out again. 
-Here is a simple list of parameters you can adjust during incremental training:
-
-* `input_dropout` - How can we make sure that our training process is kept on task? We do this by forcing the model to stoichastically feed it it's own predictions as input. This keeps the training model focused on auto-regressive forcasting, and along with `io_noise`, prevents overfitting.
-* `io_noise` - We add gaussian noise to the input and output for our network during training, and can be kept during forecasting as well. We do this to prevent overfitting, and to force the model to learn large scale trends rather than micro-fluctuations. For most tasks `0.04` or `4%` noise is sufficient.
-
-#### Example IO
-
-Input:
-``` json
-{ 
-  "checkpoint_input_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
-  "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1.t7",
-   "iterations":2,
-   "io_noise":0.04,
-   "data_path":"data://TimeSeries/GenerativeForecasting/sinewave_v1.0_t1.csv",
-   "input_dropout":0.4,
-   "mode":"train"
-}
-```
-
-Output:
-``` json
-{  
-   "final_error":0.02383182378470221,
-   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1.t7"
-}
-```
-
-And just like that you've updated your model to detect new trends.
-
-<a id="forecasting"></a>
 ### Forecasting
 So you've trained a model and now you want to start exploring your data, lets take a look at how to make forecasts.
 
-There are two ways to create a forecast, by using an up-to-date model, or by incrementally updating an existing model (no gradient updates) with new data. We call these two methods `tip-of-checkpoint forecasting` and `incremental update forecasting`. What's the difference? Simply by providing a `data_path` URL you're automatically telling the algorithm you'd like to create an `incremental inference forecast`! Let's take a look at some key parameters for forecasting:
+The trained model has no knowledge of the data it's already seen, and doesn't store weights / residual vectors to keep things simple.
+This is great, but it means you need to hold on to the data you used to train, or just append to it with new data as it comes in.
 
+Here are some important forecasting variables to keep note of:
 * forecast_size - Defines the number of steps into the future to forecast.
-* iterations - Defines the number of independently calculated forecast operations to perform, each forecast is initialized by perturbing the memory state of the checkpoint with `io_noise` to generate a monte carlo forecast envelope.
 * io_noise - Defines how much noise is added to the initial memory state, and the attention vector. Larger values force the network to deviate faster but may reflect in a more accurate forcast.
 * graph_save_path - If you'd like to have a pretty graph output like above, provide a data API URI here. Graphical output can be very useful for diagnosing and visualizing training issues.
+* data_path - Just like in training, the path to your properly formatted json data.
 
-For more information, take a look at the [Forecasting IO table](#forecastingTable)
-
-
-Lets take a quick look at a `tip-of-checkpoint` example:
-
-#### tip-of-checkpoint IO
-![my_sinegraph_t0](https://i.imgur.com/hhB6fCb.png)
-
-Input:
-
-``` json
-{
-    "mode":"forecast",
-    "checkpoint_input_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
-    "graph_save_path":"data://.algo/timeseries/generativeforecasting/temp/my_sinegraph_t0.png",
-    "forecast_size": 10,
-    "iterations": 25,
-    "io_noise": 0.05
-}
-```
-
-Output:
-
-``` json
-{  
-   "saved_graph_path":"data://.algo/timeseries/generativeforecasting/temp/my_sinegraph_t0.png",
-   "envelope":[  
-      {  
-         "mean":[  
-            -0.2524857783317566,
-            -0.2559856462478638,
-            -0.25597516059875486,
-            -0.2572448682785034,
-            -0.2587031388282776,
-            -0.25668447971343994,
-            -0.2572889566421509,
-            -0.2558885383605957,
-            -0.2552607440948486,
-            -0.2559203052520752
-         ],
-         "second_deviation":{  
-            "lower_bound":[  
-               -0.2795769316136562,
-               -0.27075492995672173,
-               -0.26555003747913497,
-               -0.2656836182323437,
-               -0.268803374512105,
-               -0.26423675519300543,
-               -0.2667612249165839,
-               -0.263370684851367,
-               -0.2649338482841223,
-               -0.26581953863931707
-            ],
-            "upper_bound":[  
-               -0.22539462504985702,
-               -0.24121636253900586,
-               -0.24640028371837475,
-               -0.24880611832466307,
-               -0.24860290314445022,
-               -0.24913220423387447,
-               -0.24781668836771792,
-               -0.2484063918698244,
-               -0.2455876399055749,
-               -0.24602107186483335
-            ]
-         },
-         "variable":"y(t)",
-         "standard_deviation":[  
-            0.013545576640949792,
-            0.007384641854428972,
-            0.004787438440190054,
-            0.004219374976920166,
-            0.005050117841913699,
-            0.0037761377397827396,
-            0.004736134137216495,
-            0.003741073245385651,
-            0.00483655209463686,
-            0.004949616693620926
-         ],
-         "first_deviation":{  
-            "lower_bound":[  
-               -0.2660313549727064,
-               -0.2633702881022928,
-               -0.2607625990389449,
-               -0.26146424325542356,
-               -0.26375325667019134,
-               -0.2604606174532227,
-               -0.2620250907793674,
-               -0.25962961160598136,
-               -0.26009729618948546,
-               -0.26086992194569614
-            ],
-            "upper_bound":[  
-               -0.23894020169080682,
-               -0.24860100439343483,
-               -0.25118772215856483,
-               -0.25302549330158325,
-               -0.2536530209863639,
-               -0.2529083419736572,
-               -0.2525528225049344,
-               -0.2521474651152101,
-               -0.25042419200021176,
-               -0.2509706885584543
-            ]
-         }
-      }
-   ]
-}
-```
-
-So in this example we have the `envelope` coordinates defined as multiple lists of `forecast_size` in length.
-
-Now lets take a look at an example with `incremental update forecasting`:
-
-#### incremental update IO
-
-![my_sinegraph_t1_trained](https://i.imgur.com/CIpIEZW.png)
-
-Input: 
-``` json
-{
-    "mode":"forecast",
-    "checkpoint_input_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t0.t7",
-    "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1_inf.t7
-    "data_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1.csv"
-    "graph_save_path":"data://.algo/timeseries/generativeforecasting/temp/my_sinegraph.png",
-    "forecast_size": 10,
-    "iterations": 25,
-    "io_noise": 0.05
-}
-```
-Output":
-``` json
-{  
-   "saved_graph_path":"data://timeseries/generativeforecasting/my_sinegraph_t1.png",
-   "checkpoint_output_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1_inf.t7",
-   "envelope":[  
-      {  
-         "mean":[  
-            0.008691980838775634,
-            0.03607967376708984,
-            0.05621590614318848,
-            0.06999496936798096,
-            0.08218138694763183,
-            0.08151638984680176,
-            0.07954122066497803,
-            0.07741095066070557,
-            0.06946793556213379,
-            0.056818246841430664
-         ],
-         "first_deviation":{  
-            "lower_bound":[  
-               -0.011594484467470512,
-               0.018994830103149025,
-               0.04193864726039028,
-               0.05866774251829453,
-               0.07278376819517646,
-               0.07200866910333781,
-               0.06691972572770245,
-               0.06318318488777479,
-               0.05722540719017249,
-               0.04463311867402814
-            ],
-            "upper_bound":[  
-               0.02897844614502178,
-               0.053164517431030664,
-               0.07049316502598668,
-               0.08132219621766738,
-               0.0915790057000872,
-               0.09102411059026572,
-               0.0921627156022536,
-               0.09163871643363634,
-               0.08171046393409509,
-               0.06900337500883319
-            ]
-         },
-         "variable":"Y(t)",
-         "second_deviation":{  
-            "lower_bound":[  
-               -0.03188094977371666,
-               0.001909986439208207,
-               0.027661388377592085,
-               0.047340515668608106,
-               0.06338614944272108,
-               0.06250094835987385,
-               0.054298230790426893,
-               0.048955419114843995,
-               0.04498287881821118,
-               0.03244799050662561
-            ],
-            "upper_bound":[  
-               0.04926491145126793,
-               0.07024936109497149,
-               0.08477042390878486,
-               0.0926494230673538,
-               0.10097662445254257,
-               0.10053183133372967,
-               0.10478421053952916,
-               0.10586648220656714,
-               0.0939529923060564,
-               0.08118850317623572
-            ]
-         },
-         "standard_deviation":[  
-            0.020286465306246147,
-            0.017084843663940818,
-            0.014277258882798197,
-            0.011327226849686425,
-            0.009397618752455369,
-            0.009507720743463956,
-            0.012621494937275568,
-            0.014227765772930783,
-            0.012242528371961305,
-            0.012185128167402526
-         ]
-      }
-   ]
-}
-```
-
-The graphs are different! This is beacuse when you pass a `data_path` as input, it automatically updates the model state to the end of that `data_path`. 
-*When incrementally updating, always ensure that your next dataset is in sequential order from the previous dataset.*
-
-What happens if we reuse that saved model and run a `tip-of-checkpoint` forecast? Well let's find out!
-
-![inferred graph](https://i.imgur.com/pH30mNl.png)
-
-
-``` json
-{  
-   "iterations":25,
-   "mode":"forecast",
-   "graph_save_path":"data://timeseries/generativeforecasting/my_sinegraph_t1_inferred.png",
-   "forecast_size":100,
-   "checkpoint_input_path":"data://timeseries/generativeforecasting/sinewave_v1.0_t1_inf.t7",
-   "io_noise":0.05
-}
-```
-
-It works! No backpropegation required for simple updates like this. If your datas signals or trends do change or drift overtime, it is highly recommended to run a [incremental training](#incrTraining) operation perioidically to ensure forecast accuracy.
 
 ## IO Schema
 
@@ -552,5 +261,5 @@ With input_dropout we can get pretty close to a real accuracy measurement, but f
 [ef]: https://en.wikipedia.org/wiki/Earthquake_prediction
 [econPred]: https://en.wikipedia.org/wiki/Stock_market_prediction
 [autoreg]: https://dzone.com/articles/vector-autoregression-overview-and-proposals
-[initsined]: https://gist.github.com/zeryx/00a84571fb3bfbfc4e08fdec2900b68f
-[initbitd]: https://gist.github.com/zeryx/5d9a004ac10c4af702fc2a22dc3ad3f8
+[algo_link]: https://algorithmia.com/algorithms/TimeSeries/OpenForecast
+[rossman_example]: https://github.com/algorithmiaio/OpenForecast/tree/master/tools/rossman

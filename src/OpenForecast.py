@@ -113,8 +113,8 @@ def test_train():
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/rossman_5_training.json"
     # input['model_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
     input['model_output_path'] = "data://timeseries/generativeforecasting/rossman_5.zip"
-    input['training_time'] = 500
-    input['model_complexity'] = 1.0
+    input['training_time'] = 50
+    input['model_complexity'] = 0.65
     input['forecast_length'] = 10
     return apply(input)
 
@@ -132,6 +132,6 @@ def test_forecast():
     return apply(input)
 
 if __name__ == "__main__":
-  result = test_forecast()
-  # result = test_train()
+  # result = test_forecast()
+  result = test_train()
   print(result)
