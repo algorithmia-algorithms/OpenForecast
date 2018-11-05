@@ -90,9 +90,10 @@ class Model:
         forecast_tensor = torch.zeros(self.forecast_length, self.data_dimensionality)
         forecast_tensor[0] = h_t
         for i in range(1, self.forecast_length):
-            output, residual_forecast, memory_forecast = self.network.forward(forecast_tensor[i - 1], residual_forecast,
+            last_step = forecast_tensor[i - 1]
+            next_step, residual_forecast, memory_forecast = self.network.forward(last_step, residual_forecast,
                                                                               memory_forecast)
-            forecast_tensor[i] = output
+            forecast_tensor[i] = next_step
         return forecast_tensor
 
 

@@ -13,7 +13,7 @@ def get_data_for_store(data, store_num):
     store_num - an integer denoting the store id
 
     output:
-    data - a json object containing all output sequences for the store
+    data - a json list containing the full sequence for the store index defined by store_num
     """
     found_data = []
     for row in data:
@@ -72,7 +72,7 @@ def format_for_algorithm(file_path, num_stores):
     num_stores - the number of stores you want to use in your dataset
 
     Output:
-    A properly formatted json object containing the serializable tensor, headers and important columns.
+    A properly formatted json object containing the serializable tensor, and labelled feature columns
     """
     raw_data = load_data_file(file_path)
     store_tensors = []
@@ -104,14 +104,13 @@ def format_for_algorithm(file_path, num_stores):
 def serialize_to_file(path, object):
     with open(path, 'w') as f:
         json.dump(object, f)
-    return "done"
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="The rossman sales data formatter.")
-    parser.add_argument('input_path', type=str, help="The local system path to the rossman training data.")
-    parser.add_argument('output_path', type=str, help="The local system path to where the formatted data should live.")
-    parser.add_argument('num_of_stores', type=int, help="The number of stores to consolidate into the dataset.")
+    parser.add_argument('--input_path', type=str, help="The local system path to the rossman training data.")
+    parser.add_argument('--output_path', type=str, help="The local system path to where the formatted data should live.")
+    parser.add_argument('--num_of_stores', type=int, help="The number of stores to consolidate into the dataset.")
     args = parser.parse_args()
     result = format_for_algorithm(args.input_path, args.num_of_stores)
     serialize_to_file(args.output_path, result)
