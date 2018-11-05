@@ -16,8 +16,7 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     else:
         meta_data = dict()
         meta_data['training_time'] = parameters.training_time
-        meta_data['headers'] = data['headers']
-        meta_data['feature_columns'] = data['columns_to_forecast']
+        meta_data['feature_columns'] = data['feature_columns']
         meta_data['io_dimension'] = tensor.shape[1]
         meta_data['norm_boundaries'] = calc_norm_boundaries(tensor, meta_data['io_dimension'])
 
@@ -121,16 +120,17 @@ def revert_normalization(data: np.ndarray, meta_data: dict):
 # uses the variable Headers to label the dimension appropriately.
 def format_forecast(forecast: np.ndarray, meta_data: dict):
     true_forecast = revert_normalization(forecast, meta_data)
-    headers = meta_data['headers']
+    feature_columns = meta_data['feature_columns']
     result = dict()
-    for i in range(len(headers)):
-        result[headers[i]] = true_forecast[:, i].tolist()
+    for i in range(len(feature_columns)):
+        header = feature_columns[i]['header']
+        result[header] = true_forecast[:, i].tolist()
     return result
 
 
 # Uses matplotlib to create a graph of the forecast tensor, useful for visualizing the results.
 def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
-    headers = meta_data['headers']
+    feature_columns = meta_data['feature_columns']
 
     forecast_length = forecast.shape[0]
     seq_length = x.shape[0]
@@ -139,8 +139,8 @@ def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
         raise utilities.AlgorithmError("requested forecast length for graphing,"
                                      " beacuse input sequence is {} long".format(str(seq_length)))
     x = np.arange(1, forecast_length*2+1)
-    for i in range(len(headers)):
-        label = headers[i]
+    for i in range(len(feature_columns)):
+        label = feature_columns[i]['header']
         plt.plot(x[-forecast_length:], forecast[:, i], linestyle='--', label=label)
     plt.savefig(filename)
     plt.close()

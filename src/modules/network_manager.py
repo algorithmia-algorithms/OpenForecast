@@ -101,11 +101,13 @@ class Model:
             filtered_tensors = []
             if len(tensor.shape) == 3:
                 for feature in self.feature_columns:
-                        filtered_tensors.append(tensor[:, :, feature])
+                    index = feature['index']
+                    filtered_tensors.append(tensor[:, :, index])
                 filtered_tensor = torch.stack(filtered_tensors, dim=2)
             else:
                 for feature in self.feature_columns:
-                        filtered_tensors.append(tensor[:, feature])
+                    index = feature['index']
+                    filtered_tensors.append(tensor[:, index])
                 filtered_tensor = torch.stack(filtered_tensors, dim=1)
         else:
             filtered_tensor = tensor
