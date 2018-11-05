@@ -46,10 +46,9 @@ Input:
    "data_path":"data://TimeSeries/GenerativeForecasting/rossman_5.json",
    "model_complexity": 0.65,
    "forecast_length": 10,
-   "training_time": 30
-   "mode":"train",
-   "future_beam_width":25
-}
+   "training_time": 30,
+   "mode":"train"
+   }
 ```
 
 Output:
