@@ -3,11 +3,7 @@ import datetime
 import time
 import numpy as np
 import json
-
-
-# This script takes the training data from the rossman kaggle competition format (https://www.kaggle.com/c/cs3244-rossmann-store-sales/data)
-# And converts it into a usable format for our timeseries evaluation algorithms, specifically 'OpenForecast' and 'OpenAnomalyDetection'
-
+import argparse
 
 def get_data_for_store(data, store_num):
     r"""
@@ -74,6 +70,9 @@ def format_for_algorithm(file_path, num_stores):
     Input:
     file_path - local file path to the raw rossmans training data csv
     num_stores - the number of stores you want to use in your dataset
+
+    Output:
+    A properly formatted json object containing the serializable tensor, headers and important columns.
     """
     raw_data = load_data_file(file_path)
     store_tensors = []
@@ -110,7 +109,10 @@ def serialize_to_file(path, object):
 
 
 if __name__ == "__main__":
-    in_path = "rossman_train.csv"
-    out_path = "5_store_data.json"
-    result = format_for_algorithm(in_path, 5)
-    serialize_to_file(out_path, result)
+    parser = argparse.ArgumentParser(description="The rossman sales data formatter.")
+    parser.add_argument('input_path', type=str, help="The local system path to the rossman training data.")
+    parser.add_argument('output_path', type=str, help="The local system path to where the formatted data should live.")
+    parser.add_argument('num_of_stores', type=int, help="The number of stores to consolidate into the dataset.")
+    args = parser.parse_args()
+    result = format_for_algorithm(args.input_path, args.num_of_stores)
+    serialize_to_file(args.output_path, result)
