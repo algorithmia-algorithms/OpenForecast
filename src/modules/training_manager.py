@@ -17,6 +17,7 @@ class Model:
         self.feature_columns = meta_data['feature_columns']
         self.forecast_length = meta_data['forecast_length']
         self.training_time = meta_data['training_time']
+        self.noise = torch.tensor(meta_data['io_noise'])
         if network:
             self.network = network
         else:
@@ -68,7 +69,7 @@ class Model:
         h = []
         for i in range(len(x)):
             x_t = x[i].view(1, -1)
-            h_t, residual, memory = self.network.forward(x_t, residual, memory)
+            h_t, residual, memory = self.network.forward(x_t, residual, memory, self.noise)
             h_n = self.forecast_inner(residual, memory, h_t[-1])
             h.append(h_n)
         h = torch.stack(h)
@@ -79,7 +80,7 @@ class Model:
         h_t = None
         for i in range(len(x)):
             x_t = x[i].view(1, -1)
-            h_t, residual, memory = self.network.forward(x_t, residual, memory)
+            h_t, residual, memory = self.network.forward(x_t, residual, memory, self.noise)
         return h_t, residual, memory
 
 
@@ -92,7 +93,7 @@ class Model:
         for i in range(1, self.forecast_length):
             last_step = forecast_tensor[i - 1]
             next_step, residual_forecast, memory_forecast = self.network.forward(last_step, residual_forecast,
-                                                                              memory_forecast)
+                                                                              memory_forecast, self.noise)
             forecast_tensor[i] = next_step
         return forecast_tensor
 

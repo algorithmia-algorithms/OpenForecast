@@ -20,10 +20,10 @@ def process_input(data: dict, parameters, meta_data: dict = None):
         meta_data['io_dimension'] = tensor.shape[1]
         meta_data['norm_boundaries'] = calc_norm_boundaries(tensor, meta_data['io_dimension'])
 
-        new_architecture = define_network_architecture(parameters.model_complexity,
-                                                       len(meta_data['feature_columns']),
-                                                       meta_data['io_dimension'],
-                                                       parameters.io_noise)
+        new_architecture = define_network_geometry(parameters.model_complexity,
+                                                   len(meta_data['feature_columns']),
+                                                   meta_data['io_dimension'],
+                                                   parameters.io_noise)
         tensor_shape = {'memory': (new_architecture['recurrent']['depth'],
                                    1, new_architecture['recurrent']['output']),
                         'residual': (1, 1, new_architecture['recurrent']['output'])}
@@ -36,12 +36,7 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     return normalized_data, meta_data
 
 
-r"""
-By using the complexity parameter (which has a range between 0.0 and 1.0), we're able to figure out how many parameters
-our recurrent neural network architecture should have
-"""
-
-def define_network_architecture(complexity: float, y_width: int, io_dimensions: int, io_noise: float):
+def define_network_geometry(complexity: float, y_width: int, io_dimensions: int, io_noise: float):
     architecture = dict()
     architecture['gaussian_noise'] = {}
     architecture['linear_in'] = {}
@@ -107,8 +102,9 @@ def revert_normalization(data: np.ndarray, meta_data: dict):
     features = meta_data['feature_columns']
     output = np.empty(data.shape, float)
     for i in range(len(features)):
-        min = norm_boundaries[features[i]]['min']
-        max = norm_boundaries[features[i]]['max']
+        index = features[i]['index']
+        min = norm_boundaries[index]['min']
+        max = norm_boundaries[index]['max']
         multiplier = max-min
         intermediate = np.multiply(data[:, i], multiplier)
         result = np.add(intermediate, min)
