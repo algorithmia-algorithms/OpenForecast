@@ -22,8 +22,7 @@ def process_input(data: dict, parameters, meta_data: dict = None):
 
         new_architecture = define_network_geometry(parameters.model_complexity,
                                                    len(meta_data['feature_columns']),
-                                                   meta_data['io_dimension'],
-                                                   parameters.io_noise)
+                                                   meta_data['io_dimension'])
         tensor_shape = {'memory': (new_architecture['recurrent']['depth'],
                                    1, new_architecture['recurrent']['output']),
                         'residual': (1, 1, new_architecture['recurrent']['output'])}
@@ -36,13 +35,11 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     return normalized_data, meta_data
 
 
-def define_network_geometry(complexity: float, y_width: int, io_dimensions: int, io_noise: float):
+def define_network_geometry(complexity: float, y_width: int, io_dimensions: int):
     architecture = dict()
-    architecture['gaussian_noise'] = {}
     architecture['linear_in'] = {}
     architecture['linear_out'] = {}
     architecture['recurrent'] = {}
-    architecture['gaussian_noise']['stddev'] = io_noise
     min_depth = 1
     max_depth = 5
     min_mem_width, min_lin_width = int(1 * y_width), int(1 * y_width)
