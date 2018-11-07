@@ -341,21 +341,10 @@ if we set it to `0.0`, every subsequent forecast would be identical, given the s
 }
 ```
 
-### Frequently Asked Questions
-
-#### Why are my forecast images always scaled between 0 and 1?
-Great question! We do this so that multivariate graphs are on the same scale. If you have 2 or more independent variables it can be quite difficult to represent them in their original domain. Rest assured that the `envelope` returns denormalized data.
-
-#### How do I know what parameters to use for attention_width, future_beam_width, etc?
-Unfortunately there is no `one size fits all` solution here, it's highly dependent on your data! The default network parameter values work pretty well for us, but we recommend exploring your data by creating multiple initial models with different network parameters and seeing what works best for you.
-
-
-#### I know how well my model performs during training, but how can I calculate my model's generative forecast accuracy?
-With input_dropout we can get pretty close to a real accuracy measurement, but for a more explicit calculation be on the lookout for a sister algorithm named `ForecastAccuracy`.
 
 [ef]: https://en.wikipedia.org/wiki/Earthquake_prediction
 [econPred]: https://en.wikipedia.org/wiki/Stock_market_prediction
 [autoreg]: https://dzone.com/articles/vector-autoregression-overview-and-proposals
 [algolink]: https://algorithmia.com/algorithms/TimeSeries/OpenForecast
-[rossman_example]: https://github.com/algorithmiaio/OpenForecast/tree/master/tools/rossman
+[rossman_example]: https://github.com/algorithmiaio/OpenForecast/tree/master/tools#the-standard-timeseries-format
 [pytorch]: https://pytorch.org/get-started/locally/
