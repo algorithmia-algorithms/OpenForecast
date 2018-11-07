@@ -8,6 +8,17 @@ from torch.autograd import Variable
 from torch import from_numpy
 from src.modules import forecast_model
 
+class GaussianNoise:
+    def __init__(self, stddev: float):
+        super(GaussianNoise, self).__init__()
+        self.stddev = stddev
+
+    def add_noise(self, din):
+        rng = torch.autograd.Variable(torch.randn(din.size()) * self.stddev).float()
+        return din + rng
+
+
+
 
 class Model:
     def __init__(self, meta_data, network=None):
@@ -17,7 +28,7 @@ class Model:
         self.feature_columns = meta_data['feature_columns']
         self.forecast_length = meta_data['forecast_length']
         self.training_time = meta_data['training_time']
-        self.noise = torch.tensor(meta_data['io_noise'])
+        self.noise = GaussianNoise(meta_data['io_noise'])
         if network:
             self.network = network
         else:
@@ -29,13 +40,13 @@ class Model:
         tensor = convert_to_torch_tensor(data)
         init_residual = generate_state(self.residual_shape)
         init_memory = generate_state(self.memory_shape)
-        last_step, checkpoint_residual, checkpoint_memory = self.update(init_residual, init_memory, tensor)
-        raw_forecast = self.forecast_inner(checkpoint_residual, checkpoint_memory, last_step)
+        last_step, checkpoint_residual, checkpoint_memory = self.forward(init_residual, init_memory, tensor)
+        raw_forecast = self.forecast_step(checkpoint_residual, checkpoint_memory, last_step)
         filtered_forecast = self.filter_feature_cols(raw_forecast)
         numpy_forecast = filtered_forecast.detach().numpy()
         return numpy_forecast
 
-    def train(self, data: np.ndarray):
+    def train_model(self, data: np.ndarray):
         tensor = convert_to_torch_tensor(data)
         criterion = nn.MSELoss()
         parameters = self.network.parameters()
@@ -49,7 +60,7 @@ class Model:
             optimizer.zero_grad()
             residual = generate_state(self.residual_shape)
             memory = generate_state(self.memory_shape)
-            h, residual, memory = self.train_inner(residual, memory, x)
+            h, residual, memory = self.train_step(residual, memory, x)
             y_f = self.filter_feature_cols(y)
             h_f = self.filter_feature_cols(h)
             loss = criterion(h_f, y_f)
@@ -65,35 +76,37 @@ class Model:
     def extract_network(self):
         return self.network
 
-    def train_inner(self, residual, memory, x):
+    def train_step(self, residual, memory, x):
         h = []
         for i in range(len(x)):
             x_t = x[i].view(1, -1)
-            h_t, residual, memory = self.network.forward(x_t, residual, memory, self.noise)
-            h_n = self.forecast_inner(residual, memory, h_t[-1])
+            h_t, residual, memory = self.network.forward(x_t, residual, memory)
+            h_n = self.forecast_step(residual, memory, h_t[-1])
             h.append(h_n)
         h = torch.stack(h)
         return h, residual, memory
 
 
-    def update(self, residual: torch.Tensor, memory: torch.tensor, x: torch.Tensor):
+    def forward(self, residual: torch.Tensor, memory: torch.tensor, x: torch.Tensor):
         h_t = None
         for i in range(len(x)):
             x_t = x[i].view(1, -1)
-            h_t, residual, memory = self.network.forward(x_t, residual, memory, self.noise)
+            x_t = self.noise.add_noise(x_t)
+            h_t, residual, memory = self.network.forward(x_t, residual, memory)
         return h_t, residual, memory
 
 
 
-    def forecast_inner(self, residual_t, memory_t, h_t):
+    def forecast_step(self, residual_t, memory_t, last_step):
         residual_forecast = residual_t.clone()
         memory_forecast = memory_t.clone()
         forecast_tensor = torch.zeros(self.forecast_length, self.data_dimensionality)
-        forecast_tensor[0] = h_t
+        forecast_tensor[0] = last_step
         for i in range(1, self.forecast_length):
-            last_step = forecast_tensor[i - 1]
-            next_step, residual_forecast, memory_forecast = self.network.forward(last_step, residual_forecast,
-                                                                              memory_forecast, self.noise)
+            x_t = forecast_tensor[i - 1]
+            x_t = self.noise.add_noise(x_t)
+            next_step, residual_forecast, memory_forecast = self.network(x_t, residual_forecast,
+                                                                              memory_forecast)
             forecast_tensor[i] = next_step
         return forecast_tensor
 

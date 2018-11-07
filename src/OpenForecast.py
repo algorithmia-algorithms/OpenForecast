@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from src.modules import data_utilities, utilities
-from src.modules import training_manager
+from src.modules import model_manager
 
 
 class Parameters:
@@ -72,7 +72,7 @@ def forecast(input: Parameters):
     data_path = utilities.get_data(input.data_path)
     data = utilities.load_json(data_path)
     data, meta_data = data_utilities.process_input(data, input, meta_data)
-    model = training_manager.Model(meta_data, network)
+    model = model_manager.Model(meta_data, network)
     forecast_result = model.forecast(data)
     output['forecast'] = data_utilities.format_forecast(forecast_result, meta_data)
     if input.graph_save_path:
@@ -87,8 +87,8 @@ def train(input):
     data_path = utilities.get_data(input.data_path)
     local_data = utilities.load_json(data_path)
     data, meta_data = data_utilities.process_input(local_data, input)
-    model = training_manager.Model(meta_data)
-    error = model.train(data)
+    model = model_manager.Model(meta_data)
+    error = model.train_model(data)
     forecast_result = model.forecast(data)
     network = model.extract_network()
     output['forecast'] = data_utilities.format_forecast(forecast_result, meta_data)
@@ -115,7 +115,7 @@ def test_train():
     # input['model_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
     input['model_output_path'] = "data://timeseries/generativeforecasting/rossman_10.zip"
     input['training_time'] = 300
-    input['model_complexity'] = 0.z
+    input['model_complexity'] = 0.65
     input['forecast_length'] = 10
     return apply(input)
 

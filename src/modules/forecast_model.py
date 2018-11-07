@@ -1,15 +1,6 @@
 import torch
 from torch import nn
 
-class GaussianNoise(torch.jit.ScriptModule):
-    def __init__(self):
-        super(GaussianNoise, self).__init__()
-
-    def forward(self, din, stddev):
-        rng = torch.autograd.Variable(torch.randn(din.size()) * stddev).float()
-        return din + rng
-
-
 class ForecastNetwork(torch.jit.ScriptModule):
 
     r"""
@@ -55,21 +46,17 @@ class ForecastNetwork(torch.jit.ScriptModule):
         memory_input_shape = architecture['recurrent']['input']
         memory_output_shape = architecture['recurrent']['output']
         memory_depth_shape = architecture['recurrent']['depth']
-        stddev = architecture['gaussian_noise']['stddev']
-        io_noise = GaussianNoise()
         linear_in = nn.Linear(linear_in_input_shape, linear_in_output_shape)
         recurrent = nn.GRU(memory_input_shape, memory_output_shape, memory_depth_shape)
         linear_out = nn.Linear(linear_out_input_shape, linear_out_output_shape)
 
-        self.io_noise = torch.jit.trace(io_noise, example_inputs=(torch.randn(linear_in_input_shape), torch.tensor(stddev)), check_trace=False)
         self.linear_in = torch.jit.trace(linear_in, example_inputs=(torch.randn(linear_in_input_shape)))
         self.recurrent = torch.jit.trace(recurrent, example_inputs=(torch.randn(1, 1, memory_input_shape), torch.randn(memory_depth_shape, 1, memory_output_shape)))
         self.linear_out = torch.jit.trace(linear_out, example_inputs=(torch.randn(1, 1, linear_out_input_shape)))
 
     @torch.jit.script_method
-    def forward(self, input: torch.Tensor, residual: torch.Tensor, memory: torch.Tensor, noise_stddev: torch.Tensor):
+    def forward(self, input: torch.Tensor, residual: torch.Tensor, memory: torch.Tensor):
         input = input.view(-1)
-        input = self.io_noise(input, noise_stddev)
         processed_input = self.linear_in(input)
         processed_input = processed_input.view(1, 1, -1)
         rnn_out, memory = self.recurrent(processed_input, memory)
