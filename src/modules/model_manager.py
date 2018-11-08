@@ -22,50 +22,6 @@ class GaussianNoise:
 
 class Model:
 
-    r"""
-
-    The training process is described as below:
-
-       data sequence - X(t)
-               +
-               |
-           +---+----+
-           |        |
-           v        v
-          X(t)     Y(t)
-           +        +
-           |        |
-           v        +
-          X(t)     X(t:t+n)
-           +        +
-           |        |
-           |        |
-           +---+----+
-               |
-               |
-               v
-           +---+----+               +---------+
-           |        |               |         |         Y(t)
-           |Training+-------------->+         |        +-------------------------------------------+
-           |Set     |               |         |        |                                           |
-           +--------+               |         |        |                                           |    +---------+
-                                    |For each +-------->                                           +---->         |
-+--------+                          |timestep |        |     +--------+         +----------+            |Criterion+------>Loss
-|        |                          |         |        |     |        |         |          |        +--->         |
-| Model  +------------------------->+  +------+        +---->+ Model  +---------> Model    +--------+   +---------+
-|        |                          |  | S(t)||         X(t) |        | S(t)    |          |  Y'(t)
-+--------+                          +--+^-+---+              +----^-+-+         +----------+
-                                        | |                       | |
-                                        | +-----------------------+ |
-                                        |                           |
-                                        ----------------------------+
-
-Where:
- S(t) is the state (memory & residual) at time t
- Y'(t) is the attempted replication of Y(t) at time t
- X(t) is the provided data at time t
-    """
-
 
     def __init__(self, meta_data, network=None):
         self.residual_shape = meta_data['tensor_shape']['residual']
@@ -83,6 +39,50 @@ Where:
 
 
     def forecast(self, data: np.ndarray):
+        r"""
+        By comparison with training, the forecast process is might simpler.
+
+        The forecast process is described as below:
+
+                                                                                                           Output Forecast
+                                                                                                           Y(n:n+l)
+                                                                                                               ^
+                                                                                                               |
+                                                                                                               |
+                                                                                                               |
+ +-------------+                    +---------+                                     +----------+               |
+ |Data set X(t)+------------+       |         |                                     |          |               |
+ +-------------+            +------->         |                                     |          |               |
+                                    |         +------------------------------------->          |          +----+----+
+                                    |For each |                                     | When     |  X'(n)   |         |
+                                    |timestep +-------->                            | t == n +------------> Model   |
++--------+                          | (t)     |        |     +--------+    X'(n)    |        | |          |         |
+|        |                          |         |        |     |        +----------------------+ |          +--^------+
+| Model  +-------------------------->         |        +-----> Model  |             |          |             |
+|        |                          |         |         X(t) |        +--+          |          |             |
++--------+                          |         |              +----^---+  |          |          |             |
++---------+                         +---------+    R(t-1)         |      |          +----------+             |
+|  State  |                         |  State  +-------------------^    +-v----+     |  State   |             |
+| M(0)    +------------------------->   M()   |    M(t-1)              | R(t) |     |  M(n)    +-------------+
+| R(0)    |                         |   R()   |                        | M(t) |     |  R(n)    |
++---------+                         +-+--^----+                        +--+---+     +---^------+
+                                      |  |                                |             |
+                                      |  +--------------------------------+             |
+                                      |                                                 |
+                                      +-------------------------------------------------+
+
+        Where:
+        - M(t) is the memory tensor state at time t
+        - R(t) is the residual tensor accumulator at time t
+        - X'(n) is the predicted next step from the real X(n)
+        - X(t) is the sequence data at time t
+        - Y(t) is a sequence of subsequences created from X(t),
+        with only some variables present (defined as 'feature_columns')
+        - `n` is the last element in the timeseries sequence
+        - `t` is the timeseries step variable
+
+        """
+
         tensor = convert_to_torch_tensor(data)
         init_residual = generate_state(self.residual_shape)
         init_memory = generate_state(self.memory_shape)
@@ -93,6 +93,60 @@ Where:
         return numpy_forecast
 
     def train_model(self, data: np.ndarray):
+
+        r"""
+        Our training regimine is different than most, as we forecast at _every_ timestep, rather than just at the end.
+
+        The training process is described as below:
+
+       data sequence + X(t)
+               +
+               |
+           +---+----+
+           |        |
+           v        v
+          X(t)     Y(t)
+           +        +
+           |        |
+           v        +
+          X(t)     ~X(t:t+n)
+           +        +
+           |        |
+           |        |
+           +---+----+
+               |
+               |
+               |
+           +---v----+               +---------+                                                            Loss
+           |        |               |         |         Y(t)                                                 ^
+           |Training+--------------->         |        +-------------------------------------------+         |
+           |Set     |               |         |        |                                           |         |
+           +--------+               |For each |        |                                           |    +----+----+
+                                    |timestep +-------->                X'(t)                      +---->         |
++--------+                          | (t)     |        |     +--------+    +    +----------+            |Criterion|
+|        |                          |         |        |     |        +----+---->          |        +--->         |
+| Model  +-------------------------->         |        +-----> Model  |         | Model    +--------+   +---------+
+|        |                          |         |         X(t) |        +--+  +--->          |  Y'(t)
++--------+                          |         |              +----^---+  |  |   +----------+
++---------+                         +---------+    R(t+1)         |      |  |
+|  State  |                         |  State  +-------------------^    +-v--+-+
+| M(0)    +------------------------->   M()   |    M(t+1)              | R(t) |
+| R(0)    |                         |   R()   |                        | M(t) |
++---------+                         +----^----+                        +--+---+
+                                         |                                |
+                                         +--------------------------------+
+
+    Where:
+     - M(t) is the memory tensor state at time t
+     - R(t) is the residual tensor accumulator at time t
+     - X'(t) is the predicted next step from the real X(t)
+     - Y(t) is a sequence of subsequences created from X(t),
+     with only some variables present (defined as 'feature_columns')
+     - Y'(t) is the attempted replication of Y(t), using X'(t) at time t
+     - X(t) is the sequence data at time t
+     - `t` is the timeseries step variable
+        """
+
         tensor = convert_to_torch_tensor(data)
         criterion = nn.MSELoss()
         parameters = self.network.parameters()
