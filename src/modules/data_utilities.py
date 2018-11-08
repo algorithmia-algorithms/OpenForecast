@@ -16,12 +16,12 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     else:
         meta_data = dict()
         meta_data['training_time'] = parameters.training_time
-        meta_data['feature_columns'] = data['feature_columns']
+        meta_data['key_variables'] = data['key_variables']
         meta_data['io_dimension'] = tensor.shape[1]
         meta_data['norm_boundaries'] = calc_norm_boundaries(tensor, meta_data['io_dimension'])
 
         new_architecture = define_network_geometry(parameters.model_complexity,
-                                                   len(meta_data['feature_columns']),
+                                                   len(meta_data['key_variables']),
                                                    meta_data['io_dimension'])
         tensor_shape = {'memory': (new_architecture['recurrent']['depth'],
                                    1, new_architecture['recurrent']['output']),
@@ -96,7 +96,7 @@ def calc_norm_boundaries(data: np.ndarray, dimensions: int):
 # maps the tensors values back to the original representation
 def revert_normalization(data: np.ndarray, meta_data: dict):
     norm_boundaries = meta_data['norm_boundaries']
-    features = meta_data['feature_columns']
+    features = meta_data['key_variables']
     output = np.empty(data.shape, float)
     for i in range(len(features)):
         index = features[i]['index']
@@ -113,7 +113,7 @@ def revert_normalization(data: np.ndarray, meta_data: dict):
 # uses the variable Headers to label the dimension appropriately.
 def format_forecast(forecast: np.ndarray, meta_data: dict):
     true_forecast = revert_normalization(forecast, meta_data)
-    feature_columns = meta_data['feature_columns']
+    feature_columns = meta_data['key_variables']
     result = dict()
     for i in range(len(feature_columns)):
         header = feature_columns[i]['header']
@@ -123,7 +123,7 @@ def format_forecast(forecast: np.ndarray, meta_data: dict):
 
 # Uses matplotlib to create a graph of the forecast tensor, useful for visualizing the results.
 def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
-    feature_columns = meta_data['feature_columns']
+    feature_columns = meta_data['key_variables']
 
     forecast_length = forecast.shape[0]
     seq_length = x.shape[0]

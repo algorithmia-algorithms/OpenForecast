@@ -76,7 +76,7 @@ def format_for_algorithm(file_path, num_stores):
     """
     raw_data = load_data_file(file_path)
     store_tensors = []
-    cols_to_forecast = []
+    key_variables = []
     stored_stores = 0
     store_itr = 0
     while len(store_tensors) < num_stores:
@@ -84,7 +84,7 @@ def format_for_algorithm(file_path, num_stores):
         store_data = get_data_for_store(raw_data, store_itr+1)
         if len(store_data) == 66:
             column = {'index': stored_stores*7, 'header': 'sales for store #{}'.format(str(store_itr))}
-            cols_to_forecast.append(column)
+            key_variables.append(column)
             store_sales = np.asarray([day['sales'] for day in store_data])
             store_customers = np.asarray([day['num_of_customers'] for day in store_data])
             store_open_state = np.asarray([day['open_state'] for day in store_data])
@@ -97,7 +97,7 @@ def format_for_algorithm(file_path, num_stores):
             stored_stores += 1
     store_tensors = np.concatenate(store_tensors, axis=1)
     serializable_tensor = store_tensors.tolist()
-    output = {'tensor': serializable_tensor, 'feature_columns': cols_to_forecast}
+    output = {'tensor': serializable_tensor, 'key_variables': key_variables}
     return output
 
 

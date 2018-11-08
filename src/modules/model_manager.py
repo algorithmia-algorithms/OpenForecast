@@ -27,7 +27,7 @@ class Model:
         self.residual_shape = meta_data['tensor_shape']['residual']
         self.memory_shape = meta_data['tensor_shape']['memory']
         self.data_dimensionality = meta_data['io_dimension']
-        self.feature_columns = meta_data['feature_columns']
+        self.key_variables = meta_data['key_variables']
         self.forecast_length = meta_data['forecast_length']
         self.training_time = meta_data['training_time']
         self.noise = GaussianNoise(meta_data['io_noise'])
@@ -35,8 +35,6 @@ class Model:
             self.network = network
         else:
             self.network = init_network(meta_data['architecture'])
-
-
 
     def forecast(self, data: np.ndarray):
         r"""
@@ -77,7 +75,7 @@ class Model:
         - X'(n) is the predicted next step from the real X(n)
         - X(t) is the sequence data at time t
         - Y(t) is a sequence of subsequences created from X(t),
-        with only some variables present (defined as 'feature_columns')
+        with only some variables present (defined as 'key_variables')
         - `n` is the last element in the timeseries sequence
         - `t` is the timeseries step variable
 
@@ -88,7 +86,7 @@ class Model:
         init_memory = generate_state(self.memory_shape)
         last_step, checkpoint_residual, checkpoint_memory = self.update(init_residual, init_memory, tensor)
         raw_forecast = self.forecast_step(checkpoint_residual, checkpoint_memory, last_step)
-        filtered_forecast = self.filter_feature_cols(raw_forecast)
+        filtered_forecast = self.select_key_variables(raw_forecast)
         numpy_forecast = filtered_forecast.detach().numpy()
         return numpy_forecast
 
@@ -128,7 +126,7 @@ class Model:
 +--------+                          | (t)     |        |     +--------+    +    +----------+            |Criterion|
 |        |                          |         |        |     |        +----+---->          |        +--->         |
 | Model  +-------------------------->         |        +-----> Model  |         | Model    +--------+   +---------+
-|        |                          |         |         X(t) |        +--+  +--->          |  Y'(t)
+|        |                          |         |         X(t) |        +--+  +--->          |  H(t)
 +--------+                          |         |              +----^---+  |  |   +----------+
 +---------+                         +---------+    R(t+1)         |      |  |
 |  State  |                         |  State  +-------------------^    +-v--+-+
@@ -143,8 +141,8 @@ class Model:
      - R(t) is the residual tensor accumulator at time t
      - X'(t) is the predicted next step from the real X(t)
      - Y(t) is a sequence of subsequences created from X(t),
-     with only some variables present (defined as 'feature_columns')
-     - Y'(t) is the attempted replication of Y(t), using X'(t) at time t
+     with only some variables present (defined as 'key_variables')
+     - H(t) is the attempted replication of Y(t), using X'(t) at time t
      - X(t) is the sequence data at time t
      - `t` is the timeseries step variable
         """
@@ -163,8 +161,8 @@ class Model:
             residual = generate_state(self.residual_shape)
             memory = generate_state(self.memory_shape)
             h, residual, memory = self.train_step(residual, memory, x)
-            y_f = self.filter_feature_cols(y)
-            h_f = self.filter_feature_cols(h)
+            y_f = self.select_key_variables(y)
+            h_f = self.select_key_variables(h)
             loss = criterion(h_f, y_f)
             loss_cpu = loss.item()
             print('training loss: {}'.format(str(loss_cpu)))
@@ -182,7 +180,7 @@ class Model:
         h = []
         for i in range(len(x)):
             x_t = x[i].view(1, -1)
-            h_t, residual, memory = self.network.forward(x_t, residual, memory)
+            h_t, residual, memory = self.network(x_t, residual, memory)
             h_n = self.forecast_step(residual, memory, h_t[-1])
             h.append(h_n)
         h = torch.stack(h)
@@ -193,7 +191,7 @@ class Model:
         for i in range(len(x)):
             x_t = x[i].view(1, -1)
             x_t = self.noise.add_noise(x_t)
-            h_t, residual, memory = self.network.forward(x_t, residual, memory)
+            h_t, residual, memory = self.network(x_t, residual, memory)
         return h_t, residual, memory
 
     def forecast_step(self, residual_t, memory_t, last_step):
@@ -204,21 +202,20 @@ class Model:
         for i in range(1, self.forecast_length):
             x_t = forecast_tensor[i - 1]
             x_t = self.noise.add_noise(x_t)
-            next_step, residual_forecast, memory_forecast = self.network(x_t, residual_forecast,
-                                                                              memory_forecast)
+            next_step, residual_forecast, memory_forecast = self.network(x_t, residual_forecast, memory_forecast)
             forecast_tensor[i] = next_step
         return forecast_tensor
 
-    def filter_feature_cols(self, tensor: torch.Tensor):
-        if self.feature_columns:
+    def select_key_variables(self, tensor: torch.Tensor):
+        if self.key_variables:
             filtered_tensors = []
             if len(tensor.shape) == 3:
-                for feature in self.feature_columns:
+                for feature in self.key_variables:
                     index = feature['index']
                     filtered_tensors.append(tensor[:, :, index])
                 filtered_tensor = torch.stack(filtered_tensors, dim=2)
             else:
-                for feature in self.feature_columns:
+                for feature in self.key_variables:
                     index = feature['index']
                     filtered_tensors.append(tensor[:, index])
                 filtered_tensor = torch.stack(filtered_tensors, dim=1)
