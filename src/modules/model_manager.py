@@ -21,6 +21,52 @@ class GaussianNoise:
 
 
 class Model:
+
+    r"""
+
+    The training process is described as below:
+
+       data sequence - X(t)
+               +
+               |
+           +---+----+
+           |        |
+           v        v
+          X(t)     Y(t)
+           +        +
+           |        |
+           v        +
+          X(t)     X(t:t+n)
+           +        +
+           |        |
+           |        |
+           +---+----+
+               |
+               |
+               v
+           +---+----+               +---------+
+           |        |               |         |         Y(t)
+           |Training+-------------->+         |        +-------------------------------------------+
+           |Set     |               |         |        |                                           |
+           +--------+               |         |        |                                           |    +---------+
+                                    |For each +-------->                                           +---->         |
++--------+                          |timestep |        |     +--------+         +----------+            |Criterion+------>Loss
+|        |                          |         |        |     |        |         |          |        +--->         |
+| Model  +------------------------->+  +------+        +---->+ Model  +---------> Model    +--------+   +---------+
+|        |                          |  | S(t)||         X(t) |        | S(t)    |          |  Y'(t)
++--------+                          +--+^-+---+              +----^-+-+         +----------+
+                                        | |                       | |
+                                        | +-----------------------+ |
+                                        |                           |
+                                        ----------------------------+
+
+Where:
+ S(t) is the state (memory & residual) at time t
+ Y'(t) is the attempted replication of Y(t) at time t
+ X(t) is the provided data at time t
+    """
+
+
     def __init__(self, meta_data, network=None):
         self.residual_shape = meta_data['tensor_shape']['residual']
         self.memory_shape = meta_data['tensor_shape']['memory']
