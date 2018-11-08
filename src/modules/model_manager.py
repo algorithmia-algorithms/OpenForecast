@@ -50,20 +50,20 @@ class Model:
                                                                                                                |
                                                                                                                |
                                                                                                                |
- +-------------+                    +---------+                                     +----------+               |
- |Data set X(t)+------------+       |         |                                     |          |               |
- +-------------+            +------->         |                                     |          |               |
-                                    |         +------------------------------------->          |          +----+----+
-                                    |For each |                                     | When     |  X'(n)   |         |
-                                    |timestep +-------->                            | t == n +------------> Model   |
+ +---------+------+                 +---------+                                     +----------+               |
+ |Data Set | X(t) +-------------+   |         |                                     |          |               |
+ +---------+------+             +--->         |                                     |          |               |
+                                    |         |                                     |  when    |          +----+----+
+                                    |For each |                                     |  t = n   |  X'(n)   |         |
+                                    |timestep +--------^                            |        +------------> Model   |
 +--------+                          | (t)     |        |     +--------+    X'(n)    |        | |          |         |
 |        |                          |         |        |     |        +----------------------+ |          +--^------+
 | Model  +-------------------------->         |        +-----> Model  |             |          |             |
 |        |                          |         |         X(t) |        +--+          |          |             |
 +--------+                          |         |              +----^---+  |          |          |             |
-+---------+                         +---------+    R(t-1)         |      |          +----------+             |
++---------+                         +---------+    R(t+1)         |      |          +----------+             |
 |  State  |                         |  State  +-------------------^    +-v----+     |  State   |             |
-| M(0)    +------------------------->   M()   |    M(t-1)              | R(t) |     |  M(n)    +-------------+
+| M(0)    +------------------------->   M()   |    M(t+1)              | R(t) |     |  M(n)    +-------------+
 | R(0)    |                         |   R()   |                        | M(t) |     |  R(n)    |
 +---------+                         +-+--^----+                        +--+---+     +---^------+
                                       |  |                                |             |
@@ -86,7 +86,7 @@ class Model:
         tensor = convert_to_torch_tensor(data)
         init_residual = generate_state(self.residual_shape)
         init_memory = generate_state(self.memory_shape)
-        last_step, checkpoint_residual, checkpoint_memory = self.forward(init_residual, init_memory, tensor)
+        last_step, checkpoint_residual, checkpoint_memory = self.update(init_residual, init_memory, tensor)
         raw_forecast = self.forecast_step(checkpoint_residual, checkpoint_memory, last_step)
         filtered_forecast = self.filter_feature_cols(raw_forecast)
         numpy_forecast = filtered_forecast.detach().numpy()
@@ -99,17 +99,19 @@ class Model:
 
         The training process is described as below:
 
-       data sequence + X(t)
-               +
+          +---------+------+
+          |Data Set | X(t) |
+          +----+----+------+
                |
-           +---+----+
+               |
+           +---v----+
            |        |
            v        v
           X(t)     Y(t)
            +        +
            |        |
            v        +
-          X(t)     ~X(t:t+n)
+          X(t)     X(t:t+n)
            +        +
            |        |
            |        |
@@ -186,16 +188,13 @@ class Model:
         h = torch.stack(h)
         return h, residual, memory
 
-
-    def forward(self, residual: torch.Tensor, memory: torch.tensor, x: torch.Tensor):
+    def update(self, residual: torch.Tensor, memory: torch.tensor, x: torch.Tensor):
         h_t = None
         for i in range(len(x)):
             x_t = x[i].view(1, -1)
             x_t = self.noise.add_noise(x_t)
             h_t, residual, memory = self.network.forward(x_t, residual, memory)
         return h_t, residual, memory
-
-
 
     def forecast_step(self, residual_t, memory_t, last_step):
         residual_forecast = residual_t.clone()
@@ -209,7 +208,6 @@ class Model:
                                                                               memory_forecast)
             forecast_tensor[i] = next_step
         return forecast_tensor
-
 
     def filter_feature_cols(self, tensor: torch.Tensor):
         if self.feature_columns:
