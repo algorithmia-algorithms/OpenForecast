@@ -6,7 +6,7 @@ from torch import nn
 from torch import optim
 from torch.autograd import Variable
 from torch import from_numpy
-from src.modules import forecast_model
+from src.modules.forecast_model import ForecastNetwork
 
 class GaussianNoise:
     def __init__(self, stddev: float):
@@ -234,7 +234,7 @@ class Model:
 
 
 def convert_to_torch_tensor(data: np.ndarray):
-    return Variable(from_numpy(data), requires_grad=False).float()
+    return Variable(from_numpy(data)).float()
 
 
 def generate_state(shape: tuple):
@@ -243,5 +243,5 @@ def generate_state(shape: tuple):
 
 
 def init_network(architecture):
-    network = forecast_model.ForecastNetwork(architecture).float()
+    network = ForecastNetwork(architecture).float()
     return network
