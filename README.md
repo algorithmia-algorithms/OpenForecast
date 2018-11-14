@@ -2,6 +2,10 @@ OpenForecast is an open source **multivariate**, **portable** and **customizable
 
 <img src="https://i.imgur.com/BjGV1OX.png"></img>
 
+## Github Readme
+
+Are you looking for information how to use this algorithm outside of algorithmia? 
+Check out this alternate [readme][gitreadme]
 
 ## Introduction
 What does all that mean? lets break it down.
@@ -348,3 +352,4 @@ if we set it to `0.0`, every subsequent forecast would be identical, given the s
 [algolink]: https://algorithmia.com/algorithms/TimeSeries/OpenForecast
 [rossman_example]: https://github.com/algorithmiaio/OpenForecast/tree/master/tools#the-standard-timeseries-format
 [pytorch]: https://pytorch.org/get-started/locally/
+[gitreadme]: GITREADME.d
