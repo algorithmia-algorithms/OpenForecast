@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from src.modules import data_utilities, utilities
 from src.modules import model_manager
 
@@ -11,7 +10,7 @@ class Parameters:
         self.model_output_path = None
         self.graph_save_path = None
         self.training_time = 500
-        self.forecast_length = 10
+        self.forecast_length = None
         self.model_complexity = 0.5
         self.io_noise = 0.05
         self.outlier_removal_multiplier = 15
@@ -105,34 +104,3 @@ def apply(input):
 
     return output
 
-
-
-
-def test_train():
-    input = dict()
-    input['mode'] = "train"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    # input['model_input_path'] = "data://timeseries/generativeforecasting/sinewave_v1.5_t0.t7"
-    input['model_output_path'] = "data://timeseries/generativeforecasting/rossman_10.zip"
-    input['training_time'] = 300
-    input['model_complexity'] = 0.65
-    input['forecast_length'] = 10
-    return apply(input)
-
-
-def test_forecast():
-    input = dict()
-    input['mode'] = "forecast"
-
-    input['model_input_path'] = "data://timeseries/generativeforecasting/rossman_10.zip"
-    input['graph_save_path'] = "data://timeseries/generativeforecasting/my_api_chart.png"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    input['forecast_length'] = 15
-    input['io_noise'] = 0.05
-    print(input)
-    return apply(input)
-
-if __name__ == "__main__":
-  # result = test_forecast()
-  result = test_train()
-  print(result)
