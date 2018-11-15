@@ -2,10 +2,14 @@
 
 <img src="https://algorithmia.com/algorithms/timeseries/OpenForecast/badge"></img>
 
-At this point, your at least somewhat interested in the OpenForecast project, and you've decided you want to run it locally.
-If that's the case, you've come to the right place! 
+Welcome to the OpenForecast project, github edition.
 
-This readme will guide you through the steps you'll need to take to get this
+This algorithm supports multivariate, autoregressive forecasting with built-in model lifecycle management, neat huh!? 
+
+Want to check out the Algorithmia docs? We've got an [alternate readme][algoreadme] to do just that, it also does a great job
+at explaining what this algorithm can do - we recommend taking a quick look at it first if haven't heard of this before.
+
+The remainder of this guide will walk you through the steps you'll need to get this project
 up and running on your local system.
 
 ##  Requirements
@@ -115,6 +119,7 @@ Have any questions or comments? Feel free to create a git issue!
 
 
 [algo]: https://algorithmia.com/
-[test]: src/OpenForecast_test.py
+[test]: ../src/OpenForecast_test.py
 [data]: https://docs.algorithmia.com/#data-api-specification
 [dataspec]: https://algorithmia.com/data/hosted
+[algoreadme]: README.md
