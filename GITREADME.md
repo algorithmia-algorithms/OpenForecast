@@ -2,13 +2,16 @@
 
 <img src="https://algorithmia.com/algorithms/timeseries/OpenForecast/badge"></img>
 
-So you've heard about this OpenForecast thing and you want to see if you can run it locally, you've come to the right place!
+At this point, your at least somewhat interested in the OpenForecast project, and you've decided you want to run it locally.
+If that's the case, you've come to the right place! 
 
+This readme will guide you through the steps you'll need to take to get this
+up and running on your local system.
 
 ##  Requirements
 
 
-This project has only been tested on Ubuntu 16.04, and is not expected to work out-of-the-box in other environments.
+This project has been tested on Ubuntu 16.04, and is not expected to work out-of-the-box in other environments.
 This project uses python 3.5+, and it is not compatible with python 2.
 This project requires an [Algorithmia][algo] account setup to interact with our hosted data resources.
 The required pip packages are as follows:
@@ -21,8 +24,7 @@ matplotlib
 ```
 The pytorch 1.0.0 nightly wheel can be replaced with newer versions as required
 
-**Note:** As this algorithm needs to interact with the [Algorithmia][algo] data API, you'll need to find your `ALGORITHMIA_API_KEY` so we can access the sample data.
-
+**Note:** As this algorithm needs to interact with the Algorithmia [data API][data], you'll need to find your `ALGORITHMIA_API_KEY` so we can access the sample data.
 
 We recommend setting the environment variable `ALGORITHMIA_API_KEY` to your api key using something like this:
 
@@ -49,9 +51,17 @@ def test_train():
     return apply(input)
 ```
 
-At the very least, you should replace the following variables:
+You should replace the following variables:
 * `data_path`
 * `model_output_path`
+
+Where the `username` field is your Algorithmia account name, and `collection` is the name of a data collection you created using
+the [data API][dataspec].
+
+You'll also want to upload your formatted dataset (check out the [tools][tools] directory for ideas on formatting) to your algorithmia data collection,
+so the algorithm can find and access it properly.
+
+The rest of the variables can be changed, but the defaults can be used for your first time.
 
 Once those are set for files in your algorithmia data collections, we can execute the training script.
 
@@ -80,7 +90,11 @@ As before, we have a few variables we need to replace:
 * `model_input_path`
 * `graph_save_path`
 
-Once those are changed, there's one last thing we need to do:
+Where in the example `paths`, the  `username` field is your Algorithmia account name, and `collection` is the name of a data collection you made, for more info check out the [data API][dataspec].
+
+For a quick demo we're using same data in forecasting as we did during training, so all we have to do is provide that path now, and we're nearly ready.
+
+There's one last thing we need to do, we need to "flip" the operation in the script runner:
 
 ```python
 """Lets comment out test_train(), and uncomment test_forecast()"""
@@ -93,9 +107,14 @@ Once again, we execute the script in the project root directory.
 
 `bash /src/OpenForecast_test.py`
 
+This current execution system is subject to change, ideally we want a CLI that's as fully functional as the algorithmia API,
+but for now this works.
+
 Have any questions or comments? Feel free to create a git issue!
 
 
 
 [algo]: https://algorithmia.com/
 [test]: src/OpenForecast_test.py
+[data]: https://docs.algorithmia.com/#data-api-specification
+[dataspec]: https://algorithmia.com/data/hosted
