@@ -21,9 +21,8 @@ When training a model on your data, there are some important things to consider.
 * Your data ideally is fully continuous, step wise operators make training more difficult. But as you can see in the above example, not necessary.
 * **Each point in your dataset must be in temporal order.**
 
-
 Some important parameters initial training parameters to consider:
-* `model_complexity` - Defines how much knowledge your model is able to grasp. 
+* `model_complexity` - Defines how much knowledge your model is able to grasp, aka parameter density. Ranges from 0 to 1+.
 It's tough to overfit with our data augmentation strategies so using a larger number here for challenging datasets can certainly help, but it will take longer to train.
 * `training_time` -   Defines how long in seconds we should spend training a model. The default is `450` as the default algorithm timeout is 500 seconds. Higher numbers can yield better results.
 * `forecast_length` - In the training case, defines how far in the future the model should be able to predict for any given timestep. Larger lengths might be unstable and not train successfully, but smaller lengths might mean
@@ -120,6 +119,10 @@ Output:
    }
 }
 ```
+
+**Note**: If you provide a `model_input_path` during a training operation, the meta_data parameters from that model object
+will be used to generate a new `Model` automatically, rather than forcing you to keep old model parameters.
+This can be useful for when your algorithm experiences `concept drift` and needs to be retrained.
 
 ### Forecasting
 So you've trained a model, gotten a basic forecast and now you want to start exploring your data in more depth with more forecasts.
@@ -258,6 +261,7 @@ if we set it to `0.0`, every subsequent forecast would be identical, given the s
 | model_complexity | Float | A value between 0 and 1, defines how complex, or number of parameters to fit into the model. | `0.5` |
 | data_path | String | The path to your formatted data you wish to build a model on, must be stored on the `data API`. | N/A |
 | model_output_path | String | The output data API path where we plan to store the trained model, must be defined | N/A |
+| model_input_path | String | If you wish to retrain your model using existing model parameters, provide the path to the existing model. | N/A |
 | forecast_length| Int | The number of steps into the future we want our model to be able to predict, used in `train`ing and `forecast`ing. | `10` |
 | io_noise | Float | Defines the percentage of Gaussian noise added to the training data to perturb the results, adding noise helps the model generalize to future trends. | `0.04` |
 
