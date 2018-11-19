@@ -34,6 +34,8 @@ def process_input(input):
         else:
             raise utilities.AlgorithmError("mode is invalid, must be 'forecast', or 'train'")
     if parameters.mode == "train":
+        if 'model_input_path' in input:
+            parameters.model_input_path = type_check(input, 'model_input_path', str)
         if 'model_complexity' in input:
             parameters.model_complexity = type_check(input, 'model_complexity', float)
         if 'training_time' in input:
@@ -85,7 +87,11 @@ def train(input):
     output = dict()
     data_path = utilities.get_data(input.data_path)
     local_data = utilities.load_json(data_path)
-    data, meta_data = data_utilities.process_input(local_data, input)
+    if input.model_input_path:
+        _, meta_data = utilities.get_model_package(input.model_input_path)
+        data, meta_data = data_utilities.process_input(local_data, input, meta_data)
+    else:
+        data, meta_data = data_utilities.process_input(local_data, input)
     model = model_manager.Model(meta_data)
     error = model.train_model(data)
     forecast_result = model.forecast(data)
