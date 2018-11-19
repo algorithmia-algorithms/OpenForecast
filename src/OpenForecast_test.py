@@ -11,6 +11,7 @@ def test_train():
     input['model_complexity'] = 0.65
     input['forecast_length'] = 10
     result = apply(input)
+
     assert result['final_error'] <= 0.10
     assert len(result['forecast']['sales for store #1']) == 10
     assert os.path.isfile(result['model_output_path'])
@@ -23,6 +24,7 @@ def test_retrain():
     input['model_input_path'] = "local:///tmp/model_0.1.0.zip"
     input['model_output_path'] = "local:///tmp/model_0.1.1.zip"
     result = apply(input)
+
     assert result['final_error'] <= 0.10
     assert len(result['forecast']['sales for store #1']) == 10
     assert os.path.isfile(result['model_output_path'])
@@ -36,6 +38,7 @@ def test_forecast():
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
     input['io_noise'] = 0.05
     result = apply(input)
+
     assert result['forecast']['sales for store #9'][-1] >= 4000
     assert result['forecast']['sales for store #9'][-1] <= 5100
     assert os.path.isfile(result['graph_save_path'])

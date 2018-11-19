@@ -39,77 +39,70 @@ source ~/.bashrc
 ```
 And with that, we're ready to build a model.
 
-## How to train
+## How to test
 
-For now, we recommend that you edit the [OpenForecast_test.py][test] file and edit the training function:
+The algorithm should be fully runnable in an end2end fashion without any further changes, simply execute the following:
+
+`python /src/OpenForecast_test.py`
+
+and if you recieve no errors, the model development tests have succeeded.
+
+If you wish, you can modify the file to use your own data API collection files, or alternatively local system files by prefixing the path with `local://`
+
+Here's what the OpenForecast_test.py script looks like:
 
 ```python
+#!/usr/bin/env python3
+from src.OpenForecast import *
+import os
+
 def test_train():
     input = dict()
     input['mode'] = "train"
-    input['data_path'] = "data://username/collection/dataset.json"
-    input['model_output_path'] = "data://username/collection/model_0.1.0.zip"
-    input['training_time'] = 300
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
+    input['model_output_path'] = "local:///tmp/model_0.1.0.zip"
+    input['training_time'] = 10
     input['model_complexity'] = 0.65
     input['forecast_length'] = 10
-    return apply(input)
-```
+    result = apply(input)
 
-You should replace the following variables:
-* `data_path`
-* `model_output_path`
+    assert result['final_error'] <= 0.10
+    assert len(result['forecast']['sales for store #1']) == 10
+    assert os.path.isfile(result['model_output_path'])
 
-Where the `username` field is your Algorithmia account name, and `collection` is the name of a data collection you created using
-the [data API][dataspec].
 
-You'll also want to upload your formatted dataset (check out the [tools][tools] directory for ideas on formatting) to your algorithmia data collection,
-so the algorithm can find and access it properly.
+def test_retrain():
+    input = dict()
+    input['mode'] = "train"
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
+    input['model_input_path'] = "local:///tmp/model_0.1.0.zip"
+    input['model_output_path'] = "local:///tmp/model_0.1.1.zip"
+    result = apply(input)
 
-The rest of the variables can be changed, but the defaults can be used for your first time.
+    assert result['final_error'] <= 0.10
+    assert len(result['forecast']['sales for store #1']) == 10
+    assert os.path.isfile(result['model_output_path'])
 
-Once those are set for files in your algorithmia data collections, we can execute the training script.
 
-`bash /src/OpenForecast_test.py`
-
-## How to forecast
-
-Again, lets take a look at the [OpenForecast_test.py][test] file, but this time, lets edit the forecast function:
-
-```python
 def test_forecast():
     input = dict()
     input['mode'] = "forecast"
-
-    input['model_input_path'] = "data://username/collection/model_0.1.0.zip"
-    input['graph_save_path'] = "data://username/collection/my_api_chart.png"
-    input['data_path'] = "data://username/collection/dataset.json"
-    input['forecast_length'] = 30
+    input['model_input_path'] = "local:///tmp/model_0.1.0.zip"
+    input['graph_save_path'] = "local:///tmp/my_graph.png"
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
     input['io_noise'] = 0.05
-    print(input)
-    return apply(input)
-```
+    result = apply(input)
 
-As before, we have a few variables we need to replace:
-* `data_path`
-* `model_input_path`
-* `graph_save_path`
+    assert result['forecast']['sales for store #9'][-1] >= 4000
+    assert result['forecast']['sales for store #9'][-1] <= 5100
+    assert os.path.isfile(result['graph_save_path'])
 
-Where in the example `paths`, the  `username` field is your Algorithmia account name, and `collection` is the name of a data collection you made, for more info check out the [data API][dataspec].
-
-For a quick demo we're using same data in forecasting as we did during training, so all we have to do is provide that path now, and we're nearly ready.
-
-There's one last thing we need to do, we need to "flip" the operation in the script runner:
-
-```python
-"""Lets comment out test_train(), and uncomment test_forecast()"""
 if __name__ == "__main__":
-  result = test_forecast()
-  # result = test_train()
-  print(result)
-```
-Once again, we execute the script in the project root directory.
+    test_train()
+    test_forecast()
+    test_retrain()
 
-`bash /src/OpenForecast_test.py`
+```
 
 This current execution system is subject to change, ideally we want a CLI that's as fully functional as the algorithmia API,
 but for now this works.
