@@ -3,16 +3,20 @@ from uuid import uuid4
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from src.modules import utilities
+from src.modules import network_utilities
 
 
 
-
+# This catch-all function extracts key parameters from your dataset, and if your `meta_data` object is not defined, populates
+# it with data collected from the dataset, and the input parameters object.
+# If meta_data is already defined, most of those steps are skipped.
+# TODO: clean this up, potentially break out meta_data processing into it's own function.
 def process_input(data: dict, parameters, meta_data: dict = None):
     tensor = data['tensor']
     tensor = np.asarray(tensor, dtype=np.float64)
     if meta_data:
-        meta_data['forecast_length'] = parameters.forecast_length
+        if parameters.forecast_length:
+            meta_data['forecast_length'] = parameters.forecast_length
     else:
         meta_data = dict()
         meta_data['training_time'] = parameters.training_time
@@ -35,6 +39,9 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     return normalized_data, meta_data
 
 
+#    This function takes your complexity parameters, and other things that define your dataset, to automatically generate
+#    the width of certain types of layers, and the number of layers in your recurrent module.
+#    TODO: `complexity` right now only effects recurrent module depth, but it should influence layer width as well.
 def define_network_geometry(complexity: float, y_width: int, io_dimensions: int):
     architecture = dict()
     architecture['linear_in'] = {}
@@ -129,7 +136,7 @@ def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
     seq_length = x.shape[0]
     filename = '/tmp/{}.png'.format(str(uuid4()))
     if forecast_length >= seq_length:
-        raise utilities.AlgorithmError("requested forecast length for graphing,"
+        raise network_utilities.AlgorithmError("requested forecast length for graphing,"
                                      " beacuse input sequence is {} long".format(str(seq_length)))
     x = np.arange(1, forecast_length*2+1)
     for i in range(len(feature_columns)):
@@ -140,5 +147,5 @@ def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
     return filename
 
 def save_graph(graph_path, remote_url):
-    return utilities.put_file(graph_path, remote_url)
+    return network_utilities.put_file(graph_path, remote_url)
 
