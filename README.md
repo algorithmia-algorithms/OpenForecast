@@ -22,7 +22,7 @@ When training a model on your data, there are some important things to consider.
 * **Each point in your dataset must be in temporal order.**
 
 Some important parameters initial training parameters to consider:
-* `model_complexity` - Defines how much knowledge your model is able to grasp, aka parameter density. Ranges from 0 to 1+.
+* `model_complexity` - Describes your model's parameter density, higher values have more parameters. Ranges from 0 to 1+.
 It's tough to overfit with our data augmentation strategies so using a larger number here for challenging datasets can certainly help, but it will take longer to train.
 * `training_time` -   Defines how long in seconds we should spend training a model. The default is `450` as the default algorithm timeout is 500 seconds. Higher numbers can yield better results.
 * `forecast_length` - In the training case, defines how far in the future the model should be able to predict for any given timestep. Larger lengths might be unstable and not train successfully, but smaller lengths might mean

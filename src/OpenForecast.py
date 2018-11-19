@@ -47,6 +47,8 @@ def process_input(input):
         else:
             raise network_utilities.AlgorithmError("'model_output_path' required for training")
     elif parameters.mode == "forecast":
+        if 'forecast_length' in input:
+            parameters.forecast_length = type_check(input, 'forecast_length', int)
         if 'graph_save_path' in input:
             parameters.graph_save_path = type_check(input, 'graph_save_path', str)
         if 'model_input_path' in input:
