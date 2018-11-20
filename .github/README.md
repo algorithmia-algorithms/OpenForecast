@@ -110,7 +110,6 @@ but for now this works.
 Have any questions or comments? Feel free to create a git issue!
 
 
-
 [algo]: https://algorithmia.com/
 [test]: ../src/OpenForecast_test.py
 [data]: https://docs.algorithmia.com/#data-api-specification
