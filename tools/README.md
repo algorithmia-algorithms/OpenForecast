@@ -17,18 +17,18 @@ For our timeseries algorithms, data must be formatted into the following `json o
 
 ```
 {
-  "tensor": List[List[Float]],
-  "feature_columns": List[Column]
+  "tensor": List[List[FloatVariable
+  "key_variables": List[Column]
 }
 ```
 tensor: The 1d+ timeseries data, compatible with numpy's ndarray, formatted with
 the .tolist() function for serialization. Values must all be floating point.
 
-feature_columns: Information pretaining to particular columns in your csv that you want to forecast, as
-not every column is an objective (think open/close states, weather data, etc).
+key_variables: Important, or key variables that you wish to forecast. If there are other 
+variables present, they are thus considered `Auxilliary`, and are not forecasted (think open/close states, weather data, etc).
 
 ```
-Column: {"index": Int, "header":str}
+Variable: {"index": Int, "header":str}
 ```
 
 index: the column number for this forecastable column
@@ -635,7 +635,7 @@ used to decorate the forecast and graph results.
          1
       ]
    ],
-   "feature_columns":[  
+   "key_variables":[  
       {  
          "index":0,
          "header":"sales for store #1"
