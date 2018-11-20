@@ -114,4 +114,4 @@ Have any questions or comments? Feel free to create a git issue!
 [test]: ../src/OpenForecast_test.py
 [data]: https://docs.algorithmia.com/#data-api-specification
 [dataspec]: https://algorithmia.com/data/hosted
-[algoreadme]: README.md
+[algoreadme]: .README.md
