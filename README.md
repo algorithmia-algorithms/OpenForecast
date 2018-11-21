@@ -151,6 +151,7 @@ Input
 Output
 ```json
 {  
+   "graph_save_path":"data://.algo/temp/forecast.png",
    "forecast":{  
       "sales for store #1":[  
          4101.65673828125,
@@ -212,8 +213,7 @@ Output
          3405.80029296875,
          3479.103271484375
       ]
-   },
-   "graph_save_path":"data://.algo/temp/forecast.png"
+   }
 }
 ```
 
