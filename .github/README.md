@@ -48,7 +48,7 @@ The algorithm should be fully runnable in an end2end fashion without any further
 
 and if you recieve no errors, the model development tests have succeeded.
 
-If you wish, you can modify the file to use your own data API collection files, or alternatively local system files by prefixing the path with `local://`
+If you wish, you can modify the file to use your own data API collection files, or alternatively local system files by prefixing the path with `file://`
 
 Here's what the OpenForecast_test.py script looks like:
 
@@ -61,7 +61,7 @@ def test_train():
     input = dict()
     input['mode'] = "train"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    input['model_output_path'] = "local:///tmp/model_0.1.0.zip"
+    input['model_output_path'] = "file:///tmp/model_0.1.0.zip"
     input['training_time'] = 10
     input['model_complexity'] = 0.65
     input['forecast_length'] = 10
@@ -76,8 +76,8 @@ def test_retrain():
     input = dict()
     input['mode'] = "train"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    input['model_input_path'] = "local:///tmp/model_0.1.0.zip"
-    input['model_output_path'] = "local:///tmp/model_0.1.1.zip"
+    input['model_input_path'] = "file:///tmp/model_0.1.0.zip"
+    input['model_output_path'] = "file:///tmp/model_0.1.1.zip"
     result = apply(input)
 
     assert result['final_error'] <= 0.10
@@ -88,8 +88,8 @@ def test_retrain():
 def test_forecast():
     input = dict()
     input['mode'] = "forecast"
-    input['model_input_path'] = "local:///tmp/model_0.1.0.zip"
-    input['graph_save_path'] = "local:///tmp/my_graph.png"
+    input['model_input_path'] = "file:///tmp/model_0.1.0.zip"
+    input['graph_save_path'] = "file:///tmp/my_graph.png"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
     input['io_noise'] = 0.05
     result = apply(input)
