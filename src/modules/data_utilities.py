@@ -15,7 +15,8 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     tensor = data['tensor']
     tensor = np.asarray(tensor, dtype=np.float64)
     if meta_data:
-        meta_data['forecast_length'] = parameters.forecast_length
+        if parameters.forecast_length:
+            meta_data['forecast_length'] = parameters.forecast_length
     else:
         meta_data = dict()
         meta_data['training_time'] = parameters.training_time
