@@ -18,21 +18,23 @@ def load_data_file(file_path):
             data.append(row)
     return data
 
-def format_and_select(data, min_length):
+def format_and_select(data, length, max_vars):
     in_tensor = np.asarray(data)[:, 1:]
     out_tensor = []
     headers = []
-    for i in range(in_tensor.shape[1]):
+    for i in range(max_vars):
         variable = in_tensor[:, i]
         var_name = variable[0]
         var_data = variable[1:]
         var_data = trim_to_first_nan(var_data)
-        if var_data.shape[0] >= min_length:
+        if var_data.shape[0] >= length:
             header = {'index': i, 'header': var_name}
+            var_data = var_data[0:length]
             out_tensor.append(var_data)
             headers.append(header)
-    out_tensor = np.array(out_tensor)
-    output = {'tensor': out_tensor.tolist(), 'headers': headers}
+    out_tensor = np.stack(out_tensor, axis=1)
+    out_tensor = out_tensor.tolist()
+    output = {'tensor': out_tensor, 'key_variables': headers[:3]}
     return output
 
 
@@ -48,11 +50,14 @@ def trim_to_first_nan(variable: np.ndarray):
         output = variable
     return output
 
-
+def serialize_to_file(path, object):
+    with open(path, 'w') as f:
+        json.dump(object, f)
 
 if __name__ == "__main__":
-    input_path = "/tmp/m4_yearly.csv"
+    input_path = "/home/zeryx/algorithmia/research/m4/Yearly-train.csv"
     output_path = "/tmp/m4_yearly_0.1.json"
-    num_vars = 15
+    num_vars = 5
     data = load_data_file(input_path)
-    format_and_select(data, 1500)
+    output = format_and_select(data, 1000, num_vars)
+    serialize_to_file(output_path, output)
