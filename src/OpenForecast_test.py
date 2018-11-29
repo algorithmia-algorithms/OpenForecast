@@ -47,4 +47,3 @@ if __name__ == "__main__":
     test_train()
     test_forecast()
     test_retrain()
-

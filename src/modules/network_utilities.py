@@ -54,7 +54,6 @@ def put_file(local_path: str, remote_path: str):
         output_path = put_file_remote(local_path, remote_path)
     return output_path
 
-
 def get_data(file_path: str):
     if file_path.startswith('file://'):
         output_path = get_file_locally(file_path)
