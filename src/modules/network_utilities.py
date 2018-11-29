@@ -31,7 +31,7 @@ Our network state is preserved in two files:
 
 def get_model_package(remote_package_path: str):
     if remote_package_path.startswith('file://'):
-        local_file_path = "".join(remote_package_path.split('file://')[1:])
+        local_file_path = "".join(remote_package_path.split('file:/')[1:])
     else:
         local_file_path = get_data(remote_package_path)
     model_file, meta_data_file = unzip(local_file_path)
