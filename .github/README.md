@@ -2,7 +2,7 @@
 
 <img src="https://algorithmia.com/algorithms/timeseries/OpenForecast/badge"></img>
 
-Welcome to the OpenForecast project, github edition.
+Welcome to the OpenForecast project, Github edition.
 
 This algorithm supports multivariate, autoregressive forecasting with built-in model lifecycle management, neat huh!? 
 
@@ -14,10 +14,11 @@ up and running on your local system.
 
 ##  Requirements
 
+This project:
+* has been tested on Ubuntu 16.04 and is not expected to work out-of-the-box in other environments.
+* uses Python 3.5+, and is not compatible with Python 2.
+* requires an [Algorithmia][algo] account setup to interact with our hosted data resources.
 
-This project has been tested on Ubuntu 16.04, and is not expected to work out-of-the-box in other environments.
-This project uses python 3.5+, and it is not compatible with python 2.
-This project requires an [Algorithmia][algo] account setup to interact with our hosted data resources.
 The required pip packages are as follows:
 ```
 algorithmia>=1.0.0,<2.0
@@ -47,7 +48,7 @@ The algorithm should be fully runnable in an end2end fashion without any further
 
 and if you recieve no errors, the model development tests have succeeded.
 
-If you wish, you can modify the file to use your own data API collection files, or alternatively local system files by prefixing the path with `local://`
+If you wish, you can modify the file to use your own data API collection files, or alternatively local system files by prefixing the path with `file://`
 
 Here's what the OpenForecast_test.py script looks like:
 
@@ -60,7 +61,7 @@ def test_train():
     input = dict()
     input['mode'] = "train"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    input['model_output_path'] = "local:///tmp/model_0.1.0.zip"
+    input['model_output_path'] = "file:///tmp/model_0.1.0.zip"
     input['training_time'] = 10
     input['model_complexity'] = 0.65
     input['forecast_length'] = 10
@@ -75,8 +76,8 @@ def test_retrain():
     input = dict()
     input['mode'] = "train"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    input['model_input_path'] = "local:///tmp/model_0.1.0.zip"
-    input['model_output_path'] = "local:///tmp/model_0.1.1.zip"
+    input['model_input_path'] = "file:///tmp/model_0.1.0.zip"
+    input['model_output_path'] = "file:///tmp/model_0.1.1.zip"
     result = apply(input)
 
     assert result['final_error'] <= 0.10
@@ -87,8 +88,8 @@ def test_retrain():
 def test_forecast():
     input = dict()
     input['mode'] = "forecast"
-    input['model_input_path'] = "local:///tmp/model_0.1.0.zip"
-    input['graph_save_path'] = "local:///tmp/my_graph.png"
+    input['model_input_path'] = "file:///tmp/model_0.1.0.zip"
+    input['graph_save_path'] = "file:///tmp/my_graph.png"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
     input['io_noise'] = 0.05
     result = apply(input)
@@ -103,9 +104,6 @@ if __name__ == "__main__":
     test_retrain()
 
 ```
-
-This current execution system is subject to change, ideally we want a CLI that's as fully functional as the algorithmia API,
-but for now this works.
 
 Have any questions or comments? Feel free to create a git issue!
 

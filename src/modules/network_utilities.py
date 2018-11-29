@@ -30,8 +30,8 @@ Our network state is preserved in two files:
 """
 
 def get_model_package(remote_package_path: str):
-    if remote_package_path.startswith('local://'):
-        local_file_path = "".join(remote_package_path.split('local://')[1:])
+    if remote_package_path.startswith('file://'):
+        local_file_path = "".join(remote_package_path.split('file://')[1:])
     else:
         local_file_path = get_data(remote_package_path)
     model_file, meta_data_file = unzip(local_file_path)
@@ -48,22 +48,33 @@ def save_model_package(network: ForecastNetwork, meta_data: dict, remote_file_pa
     return output
 
 def put_file(local_path: str, remote_path: str):
-    if remote_path.startswith('local://'):
+    if remote_path.startswith('file://'):
         output_path= put_file_locally(local_path, remote_path)
     else:
         output_path = put_file_remote(local_path, remote_path)
     return output_path
 
+def get_data(file_path: str):
+    if file_path.startswith('file://'):
+        output_path = get_file_locally(file_path)
+    else:
+        output_path = get_data_remote(file_path)
+    return output_path
 
-def get_data(remote_file_path: str):
+def get_data_remote(remote_file_path: str):
     try:
         result = client.file(remote_file_path).getFile().name
     except ConnectionError:
-        result = get_data(remote_file_path)
+        result = get_data_remote(remote_file_path)
     return result
 
+def get_file_locally(local_path: str):
+    regular_path = "".join(local_path.split('file://')[1:])
+    return regular_path
+
+
 def put_file_locally(local_path: str, final_local_path: str):
-    regular_path = "".join(final_local_path.split('local://')[1:])
+    regular_path = "".join(final_local_path.split('file://')[1:])
     os.rename(local_path, regular_path)
     return regular_path
 
