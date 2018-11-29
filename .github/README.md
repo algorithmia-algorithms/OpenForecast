@@ -2,7 +2,7 @@
 
 <img src="https://algorithmia.com/algorithms/timeseries/OpenForecast/badge"></img>
 
-Welcome to the OpenForecast project, github edition.
+Welcome to the OpenForecast project, Github edition.
 
 This algorithm supports multivariate, autoregressive forecasting with built-in model lifecycle management, neat huh!? 
 
@@ -14,10 +14,10 @@ up and running on your local system.
 
 ##  Requirements
 
-
-This project has been tested on Ubuntu 16.04, and is not expected to work out-of-the-box in other environments.
-This project uses python 3.5+, and it is not compatible with python 2.
-This project requires an [Algorithmia][algo] account setup to interact with our hosted data resources.
+This project:
+* has been tested on Ubuntu 16.04 and is not expected to work out-of-the-box in other environments.
+* uses Python 3.5+, and is not compatible with Python 2.
+* requires an [Algorithmia][algo] account setup to interact with our hosted data resources.
 
 The required pip packages are as follows:
 ```
@@ -104,9 +104,6 @@ if __name__ == "__main__":
     test_retrain()
 
 ```
-
-This current execution system is subject to change, ideally we want a CLI that's as fully functional as the algorithmia API,
-but for now this works.
 
 Have any questions or comments? Feel free to create a git issue!
 
