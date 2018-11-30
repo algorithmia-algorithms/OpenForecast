@@ -160,7 +160,7 @@ class Model:
             optimizer.zero_grad()
             residual = generate_state(self.residual_shape)
             memory = generate_state(self.memory_shape)
-            h, residual, memory = self.train_step(residual, memory, x)
+            h, residual, memory = self.forecast_every_step(residual, memory, x)
             y_f = self.select_key_variables(y)
             h_f = self.select_key_variables(h)
             loss = criterion(h_f, y_f)
@@ -176,7 +176,7 @@ class Model:
     def extract_network(self):
         return self.network
 
-    def train_step(self, residual, memory, x):
+    def forecast_every_step(self, residual, memory, x):
         h = []
         for i in range(len(x)):
             x_t = x[i].view(1, -1)

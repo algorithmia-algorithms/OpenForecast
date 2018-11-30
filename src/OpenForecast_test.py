@@ -39,8 +39,8 @@ def test_forecast():
     input['io_noise'] = 0.05
     result = apply(input)
 
-    assert result['forecast']['sales for store #9'][-1] >= 4000
-    assert result['forecast']['sales for store #9'][-1] <= 5100
+    assert result['forecast']['sales for store #9'][-1] >= 3500
+    assert result['forecast']['sales for store #9'][-1] <= 5500
     assert os.path.isfile(result['graph_save_path'])
 
 if __name__ == "__main__":

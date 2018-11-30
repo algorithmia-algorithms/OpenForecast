@@ -21,15 +21,14 @@ class AlgorithmError(Exception):
     def __str__(self):
         return repr(self.value)
 
-
-r"""
-Our network state is preserved in two files:
-- The serialized torch graph representing the network called 'model_architecture.pb'
-- A meta data file containing other information such as architecture and information around training, called 'meta_data.json'
-
-"""
-
 def get_model_package(remote_package_path: str):
+    r"""
+    Our network state is preserved in two files:
+    - The serialized torch graph representing the network called 'model_architecture.pb'
+    - A meta data file containing other information such as architecture and information around training, called 'meta_data.json'
+
+    """
+
     if remote_package_path.startswith('file://'):
         local_file_path = "".join(remote_package_path.split('file:/')[1:])
     else:
