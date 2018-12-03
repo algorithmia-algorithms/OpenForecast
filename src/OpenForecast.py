@@ -13,7 +13,7 @@ class Parameters:
         self.forecast_length = None
         self.model_complexity = 0.5
         self.io_noise = 0.05
-        self.outlier_removal_multiplier = 15
+        self.outlier_removal_multiplier = 4
 
 
 

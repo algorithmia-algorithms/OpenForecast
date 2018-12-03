@@ -5,42 +5,39 @@ import os
 def test_train():
     input = dict()
     input['mode'] = "train"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    input['model_output_path'] = "file://tmp/model_0.1.0.zip"
-    input['training_time'] = 10
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/m4_daily.json"
+    input['model_output_path'] = "file://tmp/m4_daily_0.1.0.zip"
+    input['training_time'] = 300
     input['model_complexity'] = 0.65
-    input['forecast_length'] = 10
+    input['forecast_length'] = 5
     result = apply(input)
 
     assert result['final_error'] <= 0.10
-    assert len(result['forecast']['sales for store #1']) == 10
     assert os.path.isfile(result['model_output_path'])
 
 
 def test_retrain():
     input = dict()
     input['mode'] = "train"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
-    input['model_input_path'] = "file://tmp/model_0.1.0.zip"
-    input['model_output_path'] = "file://tmp/model_0.1.1.zip"
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/m4_daily.json"
+    input['model_input_path'] = "file://tmp/m4_daily_0.1.0.zip"
+    input['model_output_path'] = "file://tmp/m4_daily_0.1.1.zip"
     result = apply(input)
 
     assert result['final_error'] <= 0.10
-    assert len(result['forecast']['sales for store #1']) == 10
     assert os.path.isfile(result['model_output_path'])
 
 
 def test_forecast():
     input = dict()
     input['mode'] = "forecast"
-    input['model_input_path'] = "file://tmp/model_0.1.0.zip"
-    input['graph_save_path'] = "file://tmp/my_graph.png"
-    input['data_path'] = "data://TimeSeries/GenerativeForecasting/formatted_data_rossman_10.json"
+    input['model_input_path'] = "file://tmp/m4_daily_0.1.0.zip"
+    input['graph_save_path'] = "file://tmp/my_forecast.png"
+    input['forecast_length'] = 20
+    input['data_path'] = "data://TimeSeries/GenerativeForecasting/m4_daily.json"
     input['io_noise'] = 0.05
     result = apply(input)
 
-    assert result['forecast']['sales for store #9'][-1] >= 3500
-    assert result['forecast']['sales for store #9'][-1] <= 5500
     assert os.path.isfile(result['graph_save_path'])
 
 if __name__ == "__main__":
