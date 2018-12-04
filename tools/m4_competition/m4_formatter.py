@@ -7,38 +7,31 @@ import argparse
 
 def format_for_algorithm(data, length, max_vars):
     r"""
-    This dataset has a ton of great data, but some of it is missing. Thankfully, the dataset's individual variables are ordered by their completeness, so we can simplify our cleanup a bit.
-    * We first check to see if there are any sequences with enough consecutive data points to satisfy
-    the desired "sequence_length".
-    * We also limit the maximum number of variables to "max_vars", so even if most of our variables are
+    * We limit the maximum number of variables to "max_vars", so even if most of our variables are
     longer than "sequence_length", we truncate the rest to keep the formatted dataset trim.
     * And finally, for our demo we are only selecting the first variable as a 'key_variable', you can change this
     as desired.
-    TODO: add an "impute" option
     """
 
-    in_tensor = np.asarray(data)[:, 1:]
+    in_tensor = np.asarray(data)[1:, 1:]
     out_tensor = []
-    key_variables = []
     for i in range(max_vars):
-        variable = in_tensor[:, i]
-        var_name = variable[0]
-        var_data = variable[1:]
-        var_data = trim_to_first_nan(var_data)
+        variable = in_tensor[i, :]
+        var_data = trim_to_first_nan(variable)
         if var_data.shape[0] >= length:
-            header = {'index': i, 'header': var_name}
             var_data = var_data[0:length]
             out_tensor.append(var_data)
-            key_variables.append(header)
-    out_tensor = np.stack(out_tensor, axis=1)
+    if len(out_tensor) == 0:
+        raise Exception('the requested sequence length is too long for your data, please select a smaller number.')
+    else:
+        out_tensor = np.stack(out_tensor, axis=1)
     out_tensor = out_tensor.tolist()
-    key_variables  = key_variables[0]
-    output = {'tensor': out_tensor, 'key_variables': key_variables}
+    output = {'tensor': out_tensor}
     return output
 
 
 
-def trim_to_first_nan(variable: np.ndarray):
+def trim_to_first_nan(variable):
     r"""
     This function uses `pandas` to find non-numeric characters (missing values, or invalid entries) for each variable.
     When a non-numeric character is found, the algorithm then trims the variable sequence  from 0 -> last numeric value.
@@ -74,7 +67,6 @@ if __name__ == "__main__":
                         help="The local system path to where the formatted dataset should live.")
     parser.add_argument('--num_of_variables', type=int, help="The maximum number of variables we wish to track.")
     parser.add_argument('--sequence_length', type=int, help="The desired sequence length, shorter squences will be filtered out.")
-
     args = parser.parse_args()
     data = load_data_file(args.input_path)
     output = format_for_algorithm(data, args.sequence_length, args.num_of_variables)

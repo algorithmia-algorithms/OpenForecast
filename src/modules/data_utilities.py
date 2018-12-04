@@ -20,12 +20,14 @@ def process_input(data: dict, parameters, meta_data: dict = None):
     else:
         meta_data = dict()
         meta_data['training_time'] = parameters.training_time
-        meta_data['key_variables'] = data['key_variables']
+        if 'key_variables' in data:
+            meta_data['key_variables'] = data['key_variables']
+        else:
+            meta_data['key_variables'] = None
         meta_data['io_dimension'] = tensor.shape[1]
         meta_data['norm_boundaries'] = calc_norm_boundaries(tensor, meta_data['io_dimension'])
 
         new_architecture = define_network_geometry(parameters.model_complexity,
-                                                   len(meta_data['key_variables']),
                                                    meta_data['io_dimension'])
         tensor_shape = {'memory': (new_architecture['recurrent']['depth'],
                                    1, new_architecture['recurrent']['output']),
@@ -42,15 +44,15 @@ def process_input(data: dict, parameters, meta_data: dict = None):
 #    This function takes your complexity parameters, and other things that define your dataset, to automatically generate
 #    the width of certain types of layers, and the number of layers in your recurrent module.
 #    TODO: `complexity` right now only effects recurrent module depth, but it should influence layer width as well.
-def define_network_geometry(complexity: float, y_width: int, io_dimensions: int):
+def define_network_geometry(complexity: float,  io_dimensions: int):
     architecture = dict()
     architecture['linear_in'] = {}
     architecture['linear_out'] = {}
     architecture['recurrent'] = {}
     min_depth = 1
     max_depth = 5
-    min_mem_width, min_lin_width = int(1 * y_width), int(1 * y_width)
-    max_mem_width, max_lin_width = int(10 * y_width), int(10 * y_width)
+    min_mem_width, min_lin_width = int(1 * io_dimensions), int(1 * io_dimensions)
+    max_mem_width, max_lin_width = int(10 * io_dimensions), int(10 * io_dimensions)
     depth = int(complexity * (max_depth - min_depth)) + min_depth
     linear_width = int(complexity * (max_lin_width - min_lin_width)) + min_lin_width
     memory_width = int(complexity * (max_mem_width - min_mem_width)) + min_mem_width
@@ -75,12 +77,13 @@ def normalize_and_remove_outliers(data: np.ndarray, multiplier: float, meta_data
     dimensions = meta_data['io_dimension']
     norm_boundaries = meta_data['norm_boundaries']
     for i in range(dimensions):
-        for j in range(len(data[:, i])):
-            max_delta = mean[i] - multiplier * sd[i]
-            if not (data[j, i] > max_delta):
+        max_delta = mean[i] + multiplier * sd[i]
+        for j in range(data.shape[0]):
+            element = data[j, i]
+            if element > max_delta:
                 print('clipped {} for being too far above the mean.'.format(str(data[j, i])))
                 data[j, i] = max_delta
-            elif not (-data[j, i] > max_delta):
+            elif element < -max_delta:
                 print('clipped {} for being too far below the mean.'.format(str(data[j, i])))
                 data[j, i] = -max_delta
     for i in range(dimensions):
@@ -103,10 +106,16 @@ def calc_norm_boundaries(data: np.ndarray, dimensions: int):
 # maps the tensors values back to the original representation
 def revert_normalization(data: np.ndarray, meta_data: dict):
     norm_boundaries = meta_data['norm_boundaries']
-    features = meta_data['key_variables']
+    if meta_data['key_variables']:
+        variables = [index['index'] for index in meta_data['key_variables']]
+        num_vars = len(variables)
+    else:
+        variables = range(data.shape[1])
+        num_vars = data.shape[1]
+
     output = np.empty(data.shape, float)
-    for i in range(len(features)):
-        index = features[i]['index']
+    for i in range(num_vars):
+        index = variables[i]
         min = norm_boundaries[index]['min']
         max = norm_boundaries[index]['max']
         multiplier = max-min
@@ -120,11 +129,14 @@ def revert_normalization(data: np.ndarray, meta_data: dict):
 # uses the variable Headers to label the dimension appropriately.
 def format_forecast(forecast: np.ndarray, meta_data: dict):
     true_forecast = revert_normalization(forecast, meta_data)
-    feature_columns = meta_data['key_variables']
+    if meta_data['key_variables']:
+        feature_columns = [key_var['header'] for key_var in  meta_data['key_variables']]
+    else:
+        feature_columns = list(range(forecast.shape[1]))
     result = dict()
     for i in range(len(feature_columns)):
-        header = feature_columns[i]['header']
-        result[header] = true_forecast[:, i].tolist()
+        header = feature_columns[i]
+        result[str(header)] = true_forecast[:, i].tolist()
     return result
 
 
