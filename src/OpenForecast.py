@@ -21,7 +21,7 @@ def process_input(input):
     parameters = Parameters()
 
     if 'outlier_removal_multiplier' in input:
-        parameters.outlier_removal_multiplier = type_check(input, 'outlier_removal_multiplier', float)
+        parameters.outlier_removal_multiplier = type_check(input, 'outlier_removal_multiplier', [int, float])
 
     if 'data_path' in input:
         parameters.data_path = type_check(input, 'data_path', str)
@@ -37,9 +37,9 @@ def process_input(input):
         if 'model_input_path' in input:
             parameters.model_input_path = type_check(input, 'model_input_path', str)
         if 'model_complexity' in input:
-            parameters.model_complexity = type_check(input, 'model_complexity', float)
+            parameters.model_complexity = type_check(input, 'model_complexity', [int, float])
         if 'training_time' in input:
-                parameters.training_time = type_check(input, 'training_time', int)
+                parameters.training_time = type_check(input, 'training_time', [int, float])
         if 'forecast_length' in input:
             parameters.forecast_length = type_check(input, 'forecast_length', int)
         if 'model_output_path' in input:
@@ -60,11 +60,17 @@ def process_input(input):
 
 
 
-def type_check(dic, id, type):
-    if isinstance(dic[id], type):
-        return dic[id]
+def type_check(dic, id, typedef):
+    if isinstance(typedef, type):
+        if isinstance(dic[id], typedef):
+            return dic[id]
+        else:
+            raise network_utilities.AlgorithmError("'{}' must be of {}".format(str(id), str(typedef)))
     else:
-        raise network_utilities.AlgorithmError("'{}' must be of {}".format(str(id), str(type)))
+        for i in range(len(typedef)):
+            if isinstance(dic[id], typedef[i]):
+                return dic[id]
+        raise network_utilities.AlgorithmError("'{}' must be of {}".format(str(id), str(typedef)))
 
 
 def forecast(input: Parameters):
