@@ -7,9 +7,9 @@ def test_train():
     input['mode'] = "train"
     input['data_path'] = "data://TimeSeries/GenerativeForecasting/m4_daily.json"
     input['model_output_path'] = "file://tmp/m4_daily_0.1.0.zip"
-    input['training_time'] = 300
+    input['training_time'] = 500
     input['model_complexity'] = 0.65
-    input['forecast_length'] = 5
+    input['forecast_length'] = 8
     result = apply(input)
 
     assert result['final_error'] <= 0.10

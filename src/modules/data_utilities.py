@@ -142,17 +142,22 @@ def format_forecast(forecast: np.ndarray, meta_data: dict):
 
 # Uses matplotlib to create a graph of the forecast tensor, useful for visualizing the results.
 def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
-    feature_columns = meta_data['key_variables']
-
+    if meta_data['key_variables']:
+        num_of_variables = meta_data['key_variables']
+        labels = [element['label'] for element in meta_data['key_variables']]
+    else:
+        num_of_variables = x.shape[1]
+        labels = np.arange(0, num_of_variables)
     forecast_length = forecast.shape[0]
     seq_length = x.shape[0]
     filename = '/tmp/{}.png'.format(str(uuid4()))
     if forecast_length >= seq_length:
         raise network_utilities.AlgorithmError("requested forecast length for graphing,"
                                      " beacuse input sequence is {} long".format(str(seq_length)))
+
     x = np.arange(1, forecast_length*2+1)
-    for i in range(len(feature_columns)):
-        label = feature_columns[i]['header']
+    for i in range(num_of_variables):
+        label = labels[i]
         plt.plot(x[-forecast_length:], forecast[:, i], linestyle='--', label=label)
     plt.savefig(filename)
     plt.close()
