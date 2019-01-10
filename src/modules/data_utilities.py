@@ -144,7 +144,7 @@ def format_forecast(forecast: np.ndarray, meta_data: dict):
 def generate_graph(x: np.ndarray, forecast: np.ndarray, meta_data: dict):
     if meta_data['key_variables']:
         num_of_variables = meta_data['key_variables']
-        labels = [element['label'] for element in meta_data['key_variables']]
+        labels = [element['header'] for element in meta_data['key_variables']]
     else:
         num_of_variables = x.shape[1]
         labels = np.arange(0, num_of_variables)
