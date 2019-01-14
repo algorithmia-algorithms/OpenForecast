@@ -5,6 +5,7 @@ format that the OpenForecast algorithm can handle.
 
 Currently we have examples for:
 * [The Rossman store dataset][rossman]
+* [The M4 forecast dataset][m4]
 
 
 # The Standard Timeseries Format
@@ -112,3 +113,4 @@ used to decorate the forecast and graph results.
 
 
 [rossman]: https://www.kaggle.com/c/cs3244-rossmann-store-sales/data
+[m4]: https://www.mcompetitions.unic.ac.cy/
